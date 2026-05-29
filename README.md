@@ -2,6 +2,7 @@
 Supports Cisco Live DEVNET-3171 session: Fault Intelligence as Code: AI Agents, RAG, and MCP for Network Ops
 
 ## Authors
+
 Jason Shoemaker, CCIE #24255
 AI & Automation Architect
 Customer Experience Delivery
@@ -14,6 +15,7 @@ Cisco Systems, Inc.
 
 
 ## Session information
+
 Tuesday, Jun 2
 12:30 PM - 1:15 PM PDT
 WoS - DevNet Theater
