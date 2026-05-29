@@ -1,6 +1,15 @@
 # fault-intelligence-as-code
 Supports Cisco Live DEVNET-3171 session: Fault Intelligence as Code: AI Agents, RAG, and MCP for Network Ops
 
+## Session information
+Tuesday, Jun 2
+12:30 PM - 1:15 PM PDT
+WoS - DevNet Theater
+
+https://www.ciscolive.com/global/learn/session-catalog.html?search=DEVNET-3171#/
+
+## Abstract
+
 As networks scale, the knowledge required to detect, diagnose, and repair incidents becomes scattered across support cases, vendor advisories, telemetry analysis, and tribal expertise. This session shows how agentic AI can transform that fragmented knowledge into actionable fault intelligence that your tools can consume via simple data models and APIs.
 
 * You’ll learn how AI agents, custom knowledge bases, and context-engineering techniques translate historical incidents and vendor recommendations into precise detection logic and automated repair action workflows.
