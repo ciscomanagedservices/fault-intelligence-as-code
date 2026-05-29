@@ -3,12 +3,12 @@ Supports Cisco Live DEVNET-3171 session: Fault Intelligence as Code: AI Agents, 
 
 ## Authors
 
-Jason Shoemaker, CCIE #24255<br>
+**Jason Shoemaker**, CCIE #24255<br>
 AI & Automation Architect<br>
 Customer Experience Delivery<br>
 Cisco Systems, Inc.<br>
 <br>
-Steve Holl, CCIE #22739<br>
+**Steve Holl**, CCIE #22739<br>
 Principal Architect<br>
 Customer Experience Product Management<br>
 Cisco Systems, Inc.<br>
