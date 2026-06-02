@@ -30,3 +30,7 @@ As networks scale, the knowledge required to detect, diagnose, and repair incide
 * We’ll walk through an architecture and schema for representing “fault intelligence as code,” and how to keep agents grounded using RAG and Model Context Protocol (MCP).
 * Through practical examples and sample code, you’ll learn how to build a lightweight AI agent that constructs its own fault-intelligence knowledge base and emits machine-ready rules and repair workflows.
 * You’ll also see how these patterns plug into existing observability, ticketing, or automation tooling, and how Cisco CX is using the same ideas to continuously deliver fault intelligence that reduces MTTR and support escalations.
+
+## Code repository
+
+Code to support this capability will be published up here by 7-jun-2026. Stay tuned.
