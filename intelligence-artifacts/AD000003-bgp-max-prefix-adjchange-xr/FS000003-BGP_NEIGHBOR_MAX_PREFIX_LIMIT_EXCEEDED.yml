@@ -1,0 +1,86 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# OPEN DESIGN QUESTIONS
+#
+# 1. Regex stability: Confirm the exact phrase "maximum number of prefixes
+#    reached" is stable across all target IOS XR releases and platforms.
+# 2. Prefix-set attribution: This signature detects the fault from syslog only;
+#    it does not identify which prefix-set change caused the over-advertisement.
+# 3. Recovery behavior: Clear event assumes the same neighbor/VRF/AS tuple is
+#    reported in the "Up" message. Confirm this is true in all target environments.
+# ──────────────────────────────────────────────────────────────────────────────
+
+schema_version: "0.0.1"
+
+metadata:
+  name: BGP_NEIGHBOR_MAX_PREFIX_LIMIT_EXCEEDED
+  id: "FS000003"
+  alert_def_id: "AD000003"
+  version: "1.0.0"
+  description: |
+    Detects an IOS XR BGP neighbor session that is torn down by the remote peer
+    because the local router advertised more prefixes than the peer's configured
+    inbound maximum-prefix limit allows. The signature matches the
+    ROUTING-BGP-5-ADJCHANGE syslog containing "BGP Notification received,
+    maximum number of prefixes reached" and extracts the neighbor IP address,
+    VRF name, and remote AS number for use by the paired Repair Action Workflow.
+  severity: WARNING
+  created_date: "2026-05-29"
+  modified_date: "2026-05-29"
+  author: "CX Intelligence Team"
+  product_ids:
+    - "ASR 9000.*"
+    - "Cisco 8000.*"
+    - "NCS 5000.*"
+    - "NCS 5500.*"
+    - "NCS 5700.*"
+    - "NCS 540.*"
+    - "NCS 560.*"
+  os_versions:
+    - "IOS.XR .*"
+  component: BGP
+  tags:
+    - bgp
+    - routing
+    - max-prefix
+    - ios-xr
+    - cisco-live-us-2026
+    - devnet-3171
+  priority: 5
+  symptom: "LINK_DOWN"
+  repair_action_workflow_ref: BGP_NEIGHBOR_MAX_PREFIX_LIMIT_EXCEEDED_REPAIR
+
+conditions:
+  logic: "E1"
+  logic_lookback_time: 0
+  events:
+    - event:
+        id: "E1"
+        type: syslog
+        path: "syslog"
+        message_type: "ROUTING-BGP-5-ADJCHANGE"
+        message_sample: "bgp[1090]: %ROUTING-BGP-5-ADJCHANGE : neighbor 172.20.20.17 Down - BGP Notification received, maximum number of prefixes reached (VRF: default) (AS: 65535)"
+        evaluation:
+          type: regex
+          value: "%ROUTING-BGP-5-ADJCHANGE\\s*:\\s*neighbor\\s+(\\S+)\\s+Down\\s+-\\s+BGP Notification received,\\s+maximum number of prefixes reached\\s+\\(VRF:\\s*(\\S+)\\)\\s+\\(AS:\\s*(\\d+)\\)"
+          parameters:
+            - type: extract_to_variable
+              name: neighbor_ip
+              source: "match.group(1)"
+              description: "IP address of the affected BGP neighbor"
+            - type: extract_to_variable
+              name: vrf_name
+              source: "match.group(2)"
+              description: "VRF in which the BGP neighbor session exists"
+            - type: extract_to_variable
+              name: neighbor_as
+              source: "match.group(3)"
+              description: "Remote AS number reported in the syslog"
+        match_count: 1
+        match_period: 0
+        clear_event:
+          pattern: "%ROUTING-BGP-5-ADJCHANGE\\s*:\\s*neighbor\\s+{{ neighbor_ip }}\\s+Up\\s+\\(VRF:\\s*{{ vrf_name }}\\)\\s+\\(AS:\\s*{{ neighbor_as }}\\)"
+          lookback_period: 300
+          correlation_variables:
+            - neighbor_ip
+            - vrf_name
+            - neighbor_as

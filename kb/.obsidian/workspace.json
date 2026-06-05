@@ -1,0 +1,227 @@
+{
+  "main": {
+    "id": "1112e1e511e97e93",
+    "type": "split",
+    "children": [
+      {
+        "id": "ac79c18251aec046",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "aacee81e9dd7185c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "wiki/runbooks/_index-runbooks.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "_index-runbooks"
+            }
+          },
+          {
+            "id": "07caf540de25d429",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "2a204a42304877c4",
+    "type": "split",
+    "children": [
+      {
+        "id": "bd864a197231409c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3bd5af58c5cb0f36",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "3fe790a187ddf687",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "6fd4e49c09bdb5b6",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 200
+  },
+  "right": {
+    "id": "39414303346d2875",
+    "type": "split",
+    "children": [
+      {
+        "id": "63403c6fe6a9e09f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4c5d180999c59c61",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "wiki/runbooks/BGP Adjacency Troubleshooting.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for BGP Adjacency Troubleshooting"
+            }
+          },
+          {
+            "id": "3d0220048152a23c",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "wiki/runbooks/BGP Adjacency Troubleshooting.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from BGP Adjacency Troubleshooting"
+            }
+          },
+          {
+            "id": "162959d39edb4132",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "6cd36cfeeb614421",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "022d9b61f595467e",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "wiki/runbooks/BGP Adjacency Troubleshooting.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of BGP Adjacency Troubleshooting"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "07caf540de25d429",
+  "lastOpenFiles": [
+    "wiki/known-issues/SFP+ Silent Degradation — CRC Below BFD Threshold.md",
+    "Untitled 1.canvas",
+    "Untitled.canvas",
+    "wiki/runbooks/Interface CRC Error Troubleshooting.md",
+    "wiki/incidents/INC-20260314 — BGP Session Flap xr-43.md",
+    "wiki/sources/INC-20260314 — BGP Session Flap xr-43 (source).md",
+    "wiki/known-issues/_index-known-issues.md",
+    "wiki/index.md",
+    "wiki/overview.md",
+    "wiki/incidents/_index-incidents.md",
+    "wiki/incidents/INC-20260421 — Process Memory Exhaustion xr-43.md",
+    "wiki/entities/xr-43.md",
+    "wiki/known-issues/ASR-9904 BGP Process OOM — Large Prefix-Sets.md",
+    "wiki/runbooks/BGP Adjacency Troubleshooting.md",
+    "wiki/runbooks/_index-runbooks.md",
+    "wiki/concepts/_index-concepts.md",
+    "wiki/known-issues/Shadow IT — Unapproved Network Hardware.md",
+    "wiki/business-rules/Security Zero Trust Mandates.md",
+    "wiki/business-rules/Change Management Policy.md",
+    "wiki/business-rules/Incident Severity SLAs.md",
+    "wiki/runbooks/Circuit Outage Response.md",
+    "wiki/runbooks/NOC Alert Triage Procedure.md",
+    "wiki/concepts/Infrastructure as Code.md",
+    "wiki/concepts/RPKI.md",
+    "wiki/concepts/MACsec.md",
+    "wiki/concepts/BFD.md",
+    "wiki/concepts/VRRP.md"
+  ]
+}

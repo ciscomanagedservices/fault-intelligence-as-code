@@ -1,0 +1,249 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# OPEN DESIGN QUESTIONS
+#
+# 1. local_as: RESOLVED — extracted from "show bgp neighbors <ip>" in Step 1
+#    using the "local AS <asn>" field present in that command's output.
+#    No FMS inventory binding required.
+#
+# 2. Human approval gate: Step 3 applies a config_cli action (no shutdown).
+#    In the demo environment, this triggers a Webex approval card via the
+#    webex-notify skill before execution. This is handled by the
+#    network-troubleshooter agent, not encoded in the RAW itself. Confirm
+#    this is the intended integration pattern.
+#
+# 2. Escalation threshold: Step 4 escalates if the session is not Established
+#    after 60 seconds. Confirm this timeout is appropriate for the target
+#    environment (large routing tables may need longer).
+#
+# 3. Transient state handling: Step 2 exits the workflow (resolve) if
+#    "shutdown" is not in the running config, treating this as a transient
+#    state. Confirm this is the correct behavior — an alternative is to
+#    escalate for investigation rather than silently resolve.
+# ──────────────────────────────────────────────────────────────────────────────
+
+workflow:
+  metadata:
+    name: BGP_NEIGHBOR_ADMIN_SHUTDOWN_REPAIR
+    id: "RAW000002"
+    alert_def_id: "AD000002"
+    version: "1.0.0"
+    description: |
+      Diagnoses and repairs a BGP neighbor session in administrative shutdown
+      on an IOS XR router. Confirms the session is in Idle (Admin) state,
+      verifies the shutdown is present in the running configuration, removes
+      the shutdown to restore the session, and verifies re-establishment.
+      Escalates to TAC if the session does not recover within 60 seconds.
+
+  inputs:
+    - name: neighbor_ip
+      source: "{{ alert_vars.neighbor_ip }}"
+      type: string
+      description: "IP address of the BGP neighbor that was administratively shut down (extracted by FS000002)"
+    - name: vrf_name
+      source: "{{ alert_vars.vrf_name }}"
+      type: string
+      description: "VRF in which the BGP neighbor session exists (extracted by FS000002)"
+    - name: neighbor_as
+      source: "{{ alert_vars.neighbor_as }}"
+      type: string
+      description: "AS number of the BGP neighbor (extracted by FS000002)"
+    # local_as is NOT an input — it is extracted from "show bgp neighbors" in Step 1.
+
+  action_groups: []
+
+  steps:
+    - step_id: "1"
+      name: confirm_admin_shutdown
+      description: |
+        Verify the BGP session is down specifically due to administrative shutdown.
+        Checks for "Idle (Admin)" state — the definitive indicator that the session
+        was shut down by configuration, not by a fault condition.
+      validation:
+        # Two independent eval_cli actions combined with AND:
+        #  (1) confirm the session is in Idle (Admin) state
+        #  (2) extract the local BGP ASN from the router bgp section of the
+        #      running config (needed by Step 3's config_cli)
+        # Both must succeed for the step to proceed.
+        and:
+          - eval_cli:
+              commands:
+                - "show bgp neighbors {{ neighbor_ip }} | include \"BGP state|Last reset|shutdown\""
+              pattern: "BGP state = Idle \\(Admin\\)"
+              outputs:
+                - name: is_admin_shutdown
+                  source: "{{ result.matched }}"
+                  type: boolean
+                  description: "True if BGP state is Idle (Admin)"
+          - eval_cli:
+              commands:
+                - "show running-config router bgp"
+              # Anchored at line start so it matches the 'router bgp <asn>'
+              # header, not any neighbor remote-as line further down.
+              pattern: "(?m)^router bgp (\\d+)"
+              outputs:
+                - name: local_as
+                  source: "{{ result.groups[0] }}"
+                  type: string
+                  description: "Local BGP AS number, captured from the 'router bgp <asn>' header in the running configuration"
+      action_select:
+        - action_id: "1a"
+          name: admin_shutdown_confirmed
+          description: "BGP state is Idle (Admin) — administrative shutdown confirmed. Proceed to check running config."
+          conditions:
+            - condition: "is_admin_shutdown == True"
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "2"
+        - action_id: "1b"
+          name: not_admin_shutdown
+          description: "BGP state is not Idle (Admin) — session is down for a different reason. This workflow does not apply."
+          conditions:
+            - condition: "default"
+          action_groups:
+            - actions:
+                - escalate:
+                    type: open_support_case
+                    message: |
+                      BGP neighbor {{ neighbor_ip }} (VRF: {{ vrf_name }}, AS: {{ neighbor_as }}) is down
+                      but NOT in Idle (Admin) state. Administrative shutdown is not the cause.
+                      Investigate the actual reset reason from: show bgp neighbors {{ neighbor_ip }}
+
+    - step_id: "2"
+      name: confirm_shutdown_in_config
+      description: |
+        Verify the shutdown command is present in the running configuration for this
+        neighbor. Distinguishes a persistent administrative shutdown (config present)
+        from a transient state caused by a previous clear bgp command (no config).
+      validation:
+        eval_cli:
+          commands:
+            - "show running-config router bgp neighbor {{ neighbor_ip }}"
+          pattern: "(?m)^\\s+shutdown\\s*$"
+          outputs:
+            - name: shutdown_in_config
+              source: "{{ result.matched }}"
+              type: boolean
+              description: "True if the shutdown keyword is present under the neighbor stanza"
+      action_select:
+        - action_id: "2a"
+          name: shutdown_configured
+          description: "Shutdown is in the running config — persistent administrative shutdown confirmed. Proceed to remove it."
+          conditions:
+            - condition: "shutdown_in_config == True"
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "3"
+        - action_id: "2b"
+          name: shutdown_not_in_config
+          description: "Shutdown is NOT in the running config — transient state, session may be recovering. Monitor and resolve."
+          conditions:
+            - condition: "default"
+          action_groups:
+            - actions:
+                - resolve:
+                    message: |
+                      BGP neighbor {{ neighbor_ip }} (VRF: {{ vrf_name }}, AS: {{ neighbor_as }}) was in
+                      Idle (Admin) state but the shutdown command is not present in the running
+                      configuration. This is likely a transient state from a previous clear bgp
+                      command. Monitor for session re-establishment. No config change applied.
+
+    - step_id: "3"
+      name: remove_admin_shutdown
+      description: |
+        Remove the shutdown command from the neighbor stanza to restore the BGP session.
+        This is a configuration change — the network-troubleshooter agent will request
+        human approval via Webex before executing this step.
+      validation:
+        eval_cli:
+          commands:
+            - "show bgp neighbors {{ neighbor_ip }} | include \"BGP state\""
+          pattern: "BGP state = Idle \\(Admin\\)"
+          outputs:
+            - name: still_shutdown
+              source: "{{ result.matched }}"
+              type: boolean
+              description: "Confirm session is still in admin shutdown before applying config change"
+      action_select:
+        - action_id: "3a"
+          name: apply_no_shutdown
+          description: "Session is still in admin shutdown — apply no shutdown to restore it."
+          conditions:
+            - condition: "still_shutdown == True"
+          action_groups:
+            - actions:
+                - config_cli:
+                    commands:
+                      - "router bgp {{ local_as }}"
+                      - " neighbor {{ neighbor_ip }}"
+                      - "  no shutdown"
+                - wait:
+                    duration: 60
+                - goto:
+                    step_id: "4"
+        - action_id: "3b"
+          name: already_recovering
+          description: "Session is no longer in admin shutdown — may have been resolved externally. Skip to verification."
+          conditions:
+            - condition: "default"
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "4"
+
+    - step_id: "4"
+      name: verify_session_reestablishment
+      description: |
+        Confirm the BGP session has returned to the Established state and routes are
+        being exchanged. Waits up to 60 seconds for re-establishment. Escalates to
+        TAC if the session does not recover.
+      validation:
+        eval_cli:
+          commands:
+            - "show bgp neighbors {{ neighbor_ip }} | include \"BGP state\""
+          pattern: "BGP state = Established"
+          outputs:
+            - name: session_established
+              source: "{{ result.matched }}"
+              type: boolean
+              description: "True if BGP session has returned to Established state"
+      action_select:
+        - action_id: "4a"
+          name: session_recovered
+          description: "BGP session is Established — repair successful."
+          conditions:
+            - condition: "session_established == True"
+          action_groups:
+            - actions:
+                - resolve:
+                    message: |
+                      BGP neighbor {{ neighbor_ip }} (VRF: {{ vrf_name }}, AS: {{ neighbor_as }})
+                      has been restored to Established state. Administrative shutdown removed
+                      and session re-established successfully.
+        - action_id: "4b"
+          name: session_not_recovered
+          description: "BGP session has not recovered — wait 60 seconds and escalate to TAC with diagnostic data."
+          conditions:
+            - condition: "session_established == False"
+          action_groups:
+            - actions:
+                - escalate:
+                    type: open_support_case
+                    message: |
+                      BGP neighbor {{ neighbor_ip }} (VRF: {{ vrf_name }}, AS: {{ neighbor_as }})
+                      did not recover to Established state within 60 seconds after removing
+                      the administrative shutdown. Possible causes: remote peer also has the
+                      session shut down, authentication mismatch, capability negotiation
+                      failure, or secondary fault condition.
+                    data:
+                      commands:
+                        - "show bgp neighbors {{ neighbor_ip }}"
+                        - "show bgp summary"
+                        - "show running-config router bgp"
+                        - "show logging | include ADJCHANGE"
+                        - "show tcp brief | include {{ neighbor_ip }}"
+                      vars:
+                        - neighbor_ip
+                        - vrf_name
+                        - neighbor_as

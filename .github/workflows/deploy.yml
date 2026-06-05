@@ -1,0 +1,24 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # TODO: Replace this stub with actual deployment logic
+      # e.g., pip install -e . && python scripts/deploy.py
+      - name: Deploy (stub)
+        run: |
+          echo "Deployment successful"
+          exit 0

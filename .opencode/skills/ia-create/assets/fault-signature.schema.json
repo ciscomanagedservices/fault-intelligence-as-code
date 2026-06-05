@@ -1,0 +1,272 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "fault-signature.schema.json",
+  "title": "Fault Signature",
+  "description": "JSON Schema for Fault Intelligence Fault Signature YAML artifacts.",
+  "type": "object",
+  "required": ["schema_version", "metadata", "conditions"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of the schema (e.g. 1.0.0)"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "id", "alert_def_id", "description", "component", "severity", "version", "created_date", "modified_date", "author", "tags"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]+$",
+          "description": "UPPER_SNAKE_CASE unique identifier (no _REPAIR or _GUIDE suffix)"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^FS\\d{6}$",
+          "description": "Unique string ID with FS prefix and 6-digit zero-padded suffix (e.g. FS000004, FS000042)"
+        },
+        "alert_def_id": {
+          "type": "string",
+          "pattern": "^AD\\d{6}$",
+          "description": "ID of the Alert Definition group this Fault Signature belongs to (e.g. AD000004). Matches the parent folder name AD######-<slug>/."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10
+        },
+        "component": {
+          "type": "string",
+          "enum": ["FAN", "PSU", "CHASSIS", "OPTICS", "CPU", "MEMORY", "LINECARD", "FABRIC", "ROUTE_PROCESSOR", "CONTROLLER", "INTERFACE", "TEMPERATURE", "VOLTAGE", "NP", "ASIC", "BGP", "UNKNOWN"]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["CRITICAL", "MAJOR", "WARNING", "MINOR", "UNKNOWN"]
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "created_date": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "modified_date": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "author": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "minItems": 1
+        },
+        "product_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "os_versions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "symptom": {
+          "type": "string",
+          "description": "OpenConfig alarm symptom enumeration value"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Ordering within same severity/symptom. Lower = higher priority. Default: 5"
+        },
+        "fault_signature_ref": {
+          "type": "string"
+        },
+        "repair_action_workflow_ref": {
+          "type": "string"
+        }
+      }
+    },
+    "conditions": {
+      "type": "object",
+      "required": ["logic", "events"],
+      "additionalProperties": false,
+      "properties": {
+        "logic": {
+          "type": "string",
+          "description": "Boolean/arithmetic expression over event IDs (e.g. 'E1 AND (E2 OR E3)')"
+        },
+        "logic_lookback_time": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Time window in seconds for correlating events in the logic expression"
+        },
+        "events": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/event_wrapper" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "event_wrapper": {
+      "type": "object",
+      "required": ["event"],
+      "additionalProperties": false,
+      "properties": {
+        "event": { "$ref": "#/definitions/event_definition" }
+      }
+    },
+    "event_definition": {
+      "type": "object",
+      "required": ["id", "type", "path", "evaluation", "match_count", "match_period"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^E\\d+$"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["syslog", "alarm", "telemetry-counter", "telemetry-gauge", "telemetry-state", "snmp-trap", "yang"]
+        },
+        "path": {
+          "type": "string"
+        },
+        "evaluation": { "$ref": "#/definitions/evaluation" },
+        "match_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "match_period": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Time window in seconds for accumulating match_count hits. 0 = instant match"
+        },
+        "message_type": {
+          "type": "string",
+          "description": "Syslog message type identifier (mnemonic). Required when type is syslog"
+        },
+        "message_sample": {
+          "type": "string",
+          "description": "Sample log message for reference and regex validation. Required when type is syslog"
+        },
+        "clear_event": { "$ref": "#/definitions/clear_event" },
+        "description": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "syslog" } },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["message_type", "message_sample"]
+          }
+        }
+      ]
+    },
+    "evaluation": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["regex", "threshold", "exact-match", "range", "state-change"]
+        },
+        "value": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["gt", "gte", "lt", "lte", "eq", "ne"]
+        },
+        "threshold_value": {},
+        "parameters": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/extraction_parameter" },
+          "description": "Extraction parameters for capturing match groups into workflow variables"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "regex" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["value"] }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "threshold" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["operator", "threshold_value"] }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "exact-match" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["value"] }
+        }
+      ]
+    },
+    "extraction_parameter": {
+      "type": "object",
+      "required": ["type", "name", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "extract_to_variable"
+        },
+        "name": {
+          "type": "string",
+          "description": "Variable name for the extracted value (e.g. fan_tray_id)"
+        },
+        "source": {
+          "type": "string",
+          "description": "Extraction source expression (e.g. match.group(1))"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable explanation of the extracted variable"
+        }
+      }
+    },
+    "clear_event": {
+      "type": "object",
+      "required": ["pattern", "lookback_period"],
+      "additionalProperties": false,
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern matching the clear/recovery event"
+        },
+        "lookback_period": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Time window in seconds to look back for a clear event after the fault match"
+        },
+        "correlation_variables": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Variable names that must match between the original fault match and the clear event to scope the clear to a specific fault instance"
+        }
+      }
+    }
+  }
+}

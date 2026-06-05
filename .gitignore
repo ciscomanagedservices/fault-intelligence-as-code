@@ -1,0 +1,52 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.env
+
+# mypy / ruff caches
+.mypy_cache/
+.ruff_cache/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker
+*.log
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Debug / staging scripts
+tmp/
+project_notes/
+research/
+ia-drafts/
+
+# Runtime logs
+logs/
+
+# OpenCode state (keep .opencode/skills/ which is checked in)
+.opencode/cache/
+.opencode/state/
+.opencode/logs/
+.opencode/*.db
+.opencode/*.sqlite
+node_modules/
+.opencode/package-lock.json

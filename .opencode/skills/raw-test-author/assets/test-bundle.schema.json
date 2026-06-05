@@ -1,0 +1,207 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cisco.com/fault-intelligence/schemas/raw-test-bundle-1.0.0.json",
+  "title": "RAW Test Bundle",
+  "description": "Schema for raw-test-author bundles consumed by scripts/run_raw_tests.py (headless) and the network-troubleshooter agent in test mode. Canonical reference bundle: intelligence-artifacts/AD000002-bgp-neighbor-admin-shutdown-xr/tests/RAW000002-BGP_NEIGHBOR_ADMIN_SHUTDOWN_REPAIR.tests.yml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "raw_id", "raw_path", "fs_path", "tests"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Bundle schema version. Always the string \"1.0.0\"."
+    },
+    "raw_id": {
+      "type": "string",
+      "pattern": "^RAW\\d{6}$",
+      "description": "RAW identifier. Draft bundles use RAW000000; published bundles use the allocated RAW######."
+    },
+    "raw_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Path to the RAW YAML this bundle exercises. Relative to the bundle file (typically '../RAW######-<slug>.yml')."
+    },
+    "fs_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Path to the paired FS YAML. Relative to the bundle file (typically '../FS######-<slug>.yml')."
+    },
+    "default_approvals": {
+      "$ref": "#/definitions/approvals",
+      "description": "Approval defaults applied when a test does not override."
+    },
+    "tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/test"}
+    }
+  },
+  "definitions": {
+    "approvals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default"],
+      "properties": {
+        "default": {
+          "type": "string",
+          "enum": ["APPROVED", "DENIED"]
+        },
+        "overrides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["step_id", "command", "decision"],
+            "properties": {
+              "step_id": {"type": "string", "minLength": 1},
+              "command": {"type": "string", "minLength": 1},
+              "decision": {
+                "type": "string",
+                "enum": ["APPROVED", "DENIED"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "expected", "alert_payload", "responses"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "snake_case test identifier, unique within the bundle."
+        },
+        "description": {"type": "string"},
+        "source": {
+          "type": "string",
+          "enum": ["synthetic", "captured"],
+          "description": "Provenance of the CLI fixtures. raw-test-author always emits 'synthetic'."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["strict", "hybrid-reasoning"],
+          "description": "RAW execution mode. 'hybrid-reasoning' tests are skipped by the headless runner (xfail)."
+        },
+        "agent_only": {
+          "type": "boolean",
+          "description": "If true, the headless Python runner skips this test (e.g. approval-denial paths the interpreter itself never sees)."
+        },
+        "webex_notify": {
+          "type": "boolean",
+          "description": "Per-test override for Webex notifications in the agent runner. Defaults to true."
+        },
+        "alert_payload": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["mode", "alert_vars"],
+          "properties": {
+            "mode": {"type": "string", "enum": ["strict", "hybrid-reasoning"]},
+            "alert_def_id": {"type": "string", "pattern": "^AD\\d{6}$"},
+            "device_hostname": {"type": "string"},
+            "alert_vars": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Variables the FMS would extract from the FS match and pass as RAW inputs."
+            }
+          }
+        },
+        "kb_context_override": {
+          "type": ["object", "null"],
+          "description": "Optional hermetic KB variables merged into the interpreter variable store. When set, the agent skips the live kb-reader call."
+        },
+        "ia_artifacts_override": {
+          "type": ["object", "null"],
+          "description": "Optional hermetic IA-artifacts override. Reserved for future use."
+        },
+        "responses": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Canned CLI fixtures keyed by (step_id, command), with command-only fallback.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["step_id", "command", "output"],
+            "properties": {
+              "step_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Matches a step.step_id in the RAW. Must be a string, not an integer."
+              },
+              "command": {"type": "string", "minLength": 1},
+              "output": {"type": "string"}
+            }
+          }
+        },
+        "log_entries": {
+          "type": "array",
+          "description": "Synthetic log-buffer fixtures consumed by eval_logs validations. Entries without timestamps are treated as within lookback_time.",
+          "items": {
+            "anyOf": [
+              {"type": "string"},
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["message"],
+                "properties": {
+                  "timestamp": {"type": "string"},
+                  "message": {"type": "string"}
+                }
+              }
+            ]
+          }
+        },
+        "approvals": {"$ref": "#/definitions/approvals"},
+        "expected": {
+          "type": "object",
+          "additionalProperties": false,
+          "anyOf": [
+            {"required": ["step_path"]},
+            {"required": ["action_ids"]},
+            {"required": ["must_visit"]}
+          ],
+          "required": ["outcome"],
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "enum": ["resolution", "escalation", "failure", "denial"]
+            },
+            "step_path": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "description": "Exact ordered list of step_id values the RAW must traverse."
+            },
+            "action_ids": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "description": "Exact ordered list of action_select entry IDs (e.g. '1a', '2b') the RAW must select."
+            },
+            "must_visit": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "description": "Partial assertion: every listed step_id must appear on the path (order not enforced)."
+            },
+            "must_not_visit": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "description": "Partial assertion: no listed step_id may appear on the path."
+            },
+            "variables": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Workflow variables expected to hold these values at termination."
+            },
+            "webex_events": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Optional ordered subset of webex-notify event names the agent runner must emit."
+            }
+          }
+        }
+      }
+    }
+  }
+}

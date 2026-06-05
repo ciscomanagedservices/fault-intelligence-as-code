@@ -1,0 +1,441 @@
+# Test bundle for RAW000002 BGP Neighbor Admin Shutdown Repair RAW.
+#
+# Diagnoses and repairs a BGP neighbor session in administrative shutdown on an
+# IOS XR router. Confirms Idle (Admin) state, verifies shutdown in running
+# config, removes shutdown, and verifies re-establishment. Escalates if the
+# session does not recover.
+#
+# Each test scripts canned CLI responses for the (step_id, command) tuples the
+# RAW will execute, plus a scripted approval decision for any config_cli /
+# escalate gates. The Python runner (scripts/run_raw_tests.py) is purely
+# deterministic — no LLM, no Webex, no RADKit. The agent test mode (driven by
+# the network-troubleshooter agent + fault-remediation skill in `mode:
+# test_bundle`) consumes the same bundle but additionally exercises the
+# Webex-notify path with `[TEST]` prefixed messages.
+#
+# Terminal leaves of RAW000002 covered here:
+#   1. 1a→2a→3a→4a  resolve   (happy path — shutdown confirmed, removed, session recovers)
+#   2. 1b→escalate            (session not in Idle (Admin) — different fault cause)
+#   3. 1a→2b→resolve          (Idle (Admin) state but shutdown not in config — transient)
+#   4. 1a→2a→3a→4b→escalate   (shutdown removed but session does not recover in 60s)
+#   5. 1a→2a→3b→4a  resolve   (session already recovering when Step 3 runs — external fix)
+#   6. deny-approval at Step 3 (headless scripted no-shutdown denial)
+#
+# ─── How to run ──────────────────────────────────────────────────────────────
+#
+# Headless Python runner (no LLM, no Webex, no RADKit — CI-safe):
+#
+#   # Run all tests in this bundle
+#   python scripts/run_raw_tests.py --bundle intelligence-artifacts/AD000002-bgp-neighbor-admin-shutdown-xr/tests/RAW000002-BGP_NEIGHBOR_ADMIN_SHUTDOWN_REPAIR.tests.yml
+#
+#   # Run a single test by name
+#   python scripts/run_raw_tests.py --bundle intelligence-artifacts/AD000002-bgp-neighbor-admin-shutdown-xr/tests/RAW000002-BGP_NEIGHBOR_ADMIN_SHUTDOWN_REPAIR.tests.yml --test resolve_via_no_shutdown
+#
+#   # Run with JUnit XML + Markdown summary output
+#   python scripts/run_raw_tests.py --bundle intelligence-artifacts/AD000002-bgp-neighbor-admin-shutdown-xr/tests/RAW000002-BGP_NEIGHBOR_ADMIN_SHUTDOWN_REPAIR.tests.yml --junit out/results.xml --summary out/summary.md
+#
+# Agent runner (network-troubleshooter in test mode — exercises Webex + approvals):
+#
+#   Paste this prompt into an OpenCode session with the network-troubleshooter agent:
+#
+#   Run the RAW test bundle for AD000002 / RAW000002 in test mode.
+#
+#   {
+#     "alert_def_id": "AD000002",
+#     "device_hostname": "r1",
+#     "mode": "strict",
+#     "test_bundle_path": "intelligence-artifacts/AD000002-bgp-neighbor-admin-shutdown-xr/tests/RAW000002-BGP_NEIGHBOR_ADMIN_SHUTDOWN_REPAIR.tests.yml",
+#     "test_name": "resolve_via_no_shutdown"
+#   }
+#
+#   Omit "test_name" to run all tests sequentially.
+#   Add "webex_notify": false to suppress Webex notifications.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+schema_version: "1.0.0"
+raw_id: "RAW000002"
+raw_path: "../RAW000002-BGP_NEIGHBOR_ADMIN_SHUTDOWN_REPAIR.yml"
+fs_path: "../FS000002-BGP_NEIGHBOR_ADMIN_SHUTDOWN.yml"
+
+# Default approval decision for config_cli / escalate gates if a test does not
+# specify its own `approvals` block. Tests below override per-step where needed.
+default_approvals:
+  default: "APPROVED"
+
+tests:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Test 1: Happy path — admin shutdown confirmed, removed, session recovers.
+  # Path: Step 1 (1a) → Step 2 (2a) → Step 3 (3a) → Step 4 (4a) → resolve
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: resolve_via_no_shutdown
+    description: |
+      BGP session is in Idle (Admin) state; shutdown is present in the running
+      config; no shutdown is applied (approved); session returns to Established
+      within the verification window → resolve.
+    expected:
+      outcome: "resolution"
+      step_path: ["1", "2", "3", "4"]
+      action_ids: ["1a", "2a", "3a", "4a"]
+      variables:
+        is_admin_shutdown: true
+        local_as: "65000"
+        shutdown_in_config: true
+        still_shutdown: true
+        session_established: true
+    alert_payload:
+      mode: strict
+      alert_vars:
+        neighbor_ip: "192.0.2.1"
+        vrf_name: "default"
+        neighbor_as: "65001"
+    responses:
+      # Step 1 — eval_cli (1): confirm Idle (Admin) state
+      - step_id: "1"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state|Last reset|shutdown\""
+        output: |
+          BGP state = Idle (Admin)
+          Last reset 00:05:12, due to Admin. shutdown
+      # Step 1 — eval_cli (2): extract local AS from running config
+      - step_id: "1"
+        command: "show running-config router bgp"
+        output: |
+          router bgp 65000
+           bgp router-id 10.255.0.1
+           neighbor 192.0.2.1
+            remote-as 65001
+            shutdown
+           !
+          !
+      # Step 2 — confirm shutdown in running config
+      - step_id: "2"
+        command: "show running-config router bgp neighbor 192.0.2.1"
+        output: |
+           neighbor 192.0.2.1
+            remote-as 65001
+            shutdown
+      # Step 3 — re-confirm still in admin shutdown before config change
+      - step_id: "3"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state\""
+        output: "BGP state = Idle (Admin)"
+      # Step 3 — config_cli: no shutdown applied (requires approval)
+      - step_id: "3"
+        command: "router bgp 65000"
+        output: ""
+      - step_id: "3"
+        command: " neighbor 192.0.2.1"
+        output: ""
+      - step_id: "3"
+        command: "  no shutdown"
+        output: ""
+      # Step 4 — verify session re-establishment
+      - step_id: "4"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state\""
+        output: "BGP state = Established, up for 00:00:08"
+    approvals:
+      default: "APPROVED"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Test 2: Session not in Idle (Admin) — different fault cause → escalate.
+  # Path: Step 1 (1b) → escalate
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: escalate_not_admin_shutdown
+    description: |
+      BGP session is down but NOT in Idle (Admin) state — it is in Active state
+      due to a TCP connectivity issue. This RAW does not apply; escalate
+      immediately with diagnostic context.
+    expected:
+      outcome: "escalation"
+      step_path: ["1"]
+      action_ids: ["1b"]
+      variables:
+        is_admin_shutdown: false
+    alert_payload:
+      mode: strict
+      alert_vars:
+        neighbor_ip: "192.0.2.1"
+        vrf_name: "default"
+        neighbor_as: "65001"
+    responses:
+      # Step 1 — eval_cli (1): session is Active, not Idle (Admin)
+      - step_id: "1"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state|Last reset|shutdown\""
+        output: |
+          BGP state = Active
+          Last reset 00:02:45, due to BGP Notification sent
+      # Step 1 — eval_cli (2): local AS extraction (still runs; AND requires both)
+      - step_id: "1"
+        command: "show running-config router bgp"
+        output: |
+          router bgp 65000
+           neighbor 192.0.2.1
+            remote-as 65001
+           !
+          !
+    approvals:
+      default: "APPROVED"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Test 3: Idle (Admin) state but shutdown NOT in running config → resolve
+  #         (transient state — likely caused by a previous clear bgp command).
+  # Path: Step 1 (1a) → Step 2 (2b) → resolve
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: resolve_transient_admin_state
+    description: |
+      BGP session is in Idle (Admin) state but the shutdown keyword is absent
+      from the running configuration. This is a transient state — the session
+      is likely recovering from a clear bgp command. Resolve without config
+      change; no action required.
+    expected:
+      outcome: "resolution"
+      step_path: ["1", "2"]
+      action_ids: ["1a", "2b"]
+      variables:
+        is_admin_shutdown: true
+        local_as: "65000"
+        shutdown_in_config: false
+    alert_payload:
+      mode: strict
+      alert_vars:
+        neighbor_ip: "192.0.2.1"
+        vrf_name: "default"
+        neighbor_as: "65001"
+    responses:
+      # Step 1 — eval_cli (1): confirm Idle (Admin)
+      - step_id: "1"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state|Last reset|shutdown\""
+        output: |
+          BGP state = Idle (Admin)
+          Last reset 00:00:30, due to Admin. shutdown
+      # Step 1 — eval_cli (2): extract local AS
+      - step_id: "1"
+        command: "show running-config router bgp"
+        output: |
+          router bgp 65000
+           neighbor 192.0.2.1
+            remote-as 65001
+           !
+          !
+      # Step 2 — shutdown keyword NOT present in neighbor stanza
+      - step_id: "2"
+        command: "show running-config router bgp neighbor 192.0.2.1"
+        output: |
+           neighbor 192.0.2.1
+            remote-as 65001
+            description "PEER-A"
+    approvals:
+      default: "APPROVED"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Test 4: Shutdown removed but session does not recover → escalate.
+  # Path: Step 1 (1a) → Step 2 (2a) → Step 3 (3a) → Step 4 (4b) → escalate
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: escalate_session_not_recovered
+    description: |
+      Admin shutdown confirmed and present in config; no shutdown applied and
+      approved; but after 60 seconds the session is still not Established.
+      Possible causes: remote peer also has session shut down, authentication
+      mismatch, or secondary fault. Escalate to TAC with diagnostic data.
+    expected:
+      outcome: "escalation"
+      step_path: ["1", "2", "3", "4"]
+      action_ids: ["1a", "2a", "3a", "4b"]
+      variables:
+        is_admin_shutdown: true
+        local_as: "65000"
+        shutdown_in_config: true
+        still_shutdown: true
+        session_established: false
+    alert_payload:
+      mode: strict
+      alert_vars:
+        neighbor_ip: "192.0.2.1"
+        vrf_name: "default"
+        neighbor_as: "65001"
+    responses:
+      # Step 1 — confirm Idle (Admin)
+      - step_id: "1"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state|Last reset|shutdown\""
+        output: |
+          BGP state = Idle (Admin)
+          Last reset 00:10:00, due to Admin. shutdown
+      # Step 1 — extract local AS
+      - step_id: "1"
+        command: "show running-config router bgp"
+        output: |
+          router bgp 65000
+           neighbor 192.0.2.1
+            remote-as 65001
+            shutdown
+           !
+          !
+      # Step 2 — shutdown in config
+      - step_id: "2"
+        command: "show running-config router bgp neighbor 192.0.2.1"
+        output: |
+           neighbor 192.0.2.1
+            remote-as 65001
+            shutdown
+      # Step 3 — still in admin shutdown
+      - step_id: "3"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state\""
+        output: "BGP state = Idle (Admin)"
+      # Step 3 — config_cli applied
+      - step_id: "3"
+        command: "router bgp 65000"
+        output: ""
+      - step_id: "3"
+        command: " neighbor 192.0.2.1"
+        output: ""
+      - step_id: "3"
+        command: "  no shutdown"
+        output: ""
+      # Step 4 — session still not Established after wait
+      - step_id: "4"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state\""
+        output: "BGP state = Active"
+      # Step 4 — escalation diagnostic commands
+      - step_id: "4"
+        command: "show bgp neighbors 192.0.2.1"
+        output: |
+          BGP neighbor is 192.0.2.1, remote AS 65001
+          BGP state = Active
+          Last reset 00:00:65, due to Admin. shutdown removed
+      - step_id: "4"
+        command: "show bgp summary"
+        output: |
+          Neighbor        AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down  St/PfxRcd
+          192.0.2.1    65001       0       0        0    0    0 00:01:05 Active
+      - step_id: "4"
+        command: "show running-config router bgp"
+        output: |
+          router bgp 65000
+           neighbor 192.0.2.1
+            remote-as 65001
+           !
+          !
+      - step_id: "4"
+        command: "show logging | include ADJCHANGE"
+        output: "(no recent ADJCHANGE entries)"
+      - step_id: "4"
+        command: "show tcp brief | include 192.0.2.1"
+        output: "(no TCP sessions to 192.0.2.1)"
+    approvals:
+      default: "APPROVED"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Test 5: Session already recovering when Step 3 runs (external fix).
+  # Path: Step 1 (1a) → Step 2 (2a) → Step 3 (3b) → Step 4 (4a) → resolve
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: resolve_externally_fixed
+    description: |
+      Admin shutdown confirmed and present in config at Step 2, but by the time
+      Step 3 re-validates the session state, the session is no longer in Idle
+      (Admin) — an operator removed the shutdown externally between steps.
+      Skip the config_cli, jump to verification, confirm Established → resolve.
+    expected:
+      outcome: "resolution"
+      step_path: ["1", "2", "3", "4"]
+      action_ids: ["1a", "2a", "3b", "4a"]
+      variables:
+        is_admin_shutdown: true
+        local_as: "65000"
+        shutdown_in_config: true
+        still_shutdown: false
+        session_established: true
+    alert_payload:
+      mode: strict
+      alert_vars:
+        neighbor_ip: "192.0.2.1"
+        vrf_name: "default"
+        neighbor_as: "65001"
+    responses:
+      # Step 1 — confirm Idle (Admin)
+      - step_id: "1"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state|Last reset|shutdown\""
+        output: |
+          BGP state = Idle (Admin)
+          Last reset 00:03:00, due to Admin. shutdown
+      # Step 1 — extract local AS
+      - step_id: "1"
+        command: "show running-config router bgp"
+        output: |
+          router bgp 65000
+           neighbor 192.0.2.1
+            remote-as 65001
+            shutdown
+           !
+          !
+      # Step 2 — shutdown still in config at this point
+      - step_id: "2"
+        command: "show running-config router bgp neighbor 192.0.2.1"
+        output: |
+           neighbor 192.0.2.1
+            remote-as 65001
+            shutdown
+      # Step 3 — session is no longer in Idle (Admin) — external operator fixed it
+      - step_id: "3"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state\""
+        output: "BGP state = OpenSent"
+      # Step 4 — session has reached Established
+      - step_id: "4"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state\""
+        output: "BGP state = Established, up for 00:00:04"
+    approvals:
+      default: "APPROVED"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Test 6: Approval denied at Step 3 config_cli.
+  # The Python runner uses approvals.overrides to simulate the human rejecting
+  # the no shutdown config change. Agent path: workflow halts with
+  # status=ESCALATION and a "denied by operator" message.
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: deny_approval_at_no_shutdown
+    description: |
+      Approval card for the `no shutdown` config_cli at Step 3 is denied by the
+      operator. The workflow halts with status=ESCALATION and a "denied by
+      operator" message.
+    expected:
+      outcome: "escalation"
+      must_visit: ["1", "2", "3"]
+      must_not_visit: ["4"]
+    alert_payload:
+      mode: strict
+      alert_vars:
+        neighbor_ip: "192.0.2.1"
+        vrf_name: "default"
+        neighbor_as: "65001"
+    responses:
+      # Step 1 — confirm Idle (Admin)
+      - step_id: "1"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state|Last reset|shutdown\""
+        output: |
+          BGP state = Idle (Admin)
+          Last reset 00:07:30, due to Admin. shutdown
+      # Step 1 — extract local AS
+      - step_id: "1"
+        command: "show running-config router bgp"
+        output: |
+          router bgp 65000
+           neighbor 192.0.2.1
+            remote-as 65001
+            shutdown
+           !
+          !
+      # Step 2 — shutdown in config
+      - step_id: "2"
+        command: "show running-config router bgp neighbor 192.0.2.1"
+        output: |
+           neighbor 192.0.2.1
+            remote-as 65001
+            shutdown
+      # Step 3 — still in admin shutdown
+      - step_id: "3"
+        command: "show bgp neighbors 192.0.2.1 | include \"BGP state\""
+        output: "BGP state = Idle (Admin)"
+    approvals:
+      default: "APPROVED"
+      overrides:
+        - step_id: "3"
+          command: "  no shutdown"
+          decision: "DENIED"

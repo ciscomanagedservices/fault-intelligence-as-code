@@ -1,0 +1,78 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# OPEN DESIGN QUESTIONS
+#
+# 1. Are both syslog facilities (FM-2 and FM-4) sufficient, or are there
+#    additional message types on newer IOS-XR versions?
+# 2. Should the clear_event lookback_period be reduced from 1200s for
+#    environments with fast recovery expectations?
+# ──────────────────────────────────────────────────────────────────────────────
+
+schema_version: "0.0.1"
+
+metadata:
+  name: FAN_TRAY_THERMAL_FAULT
+  id: FS000010
+  alert_def_id: AD000010
+  version: "1.0.0"
+  severity: CRITICAL
+  created_date: "2026-04-20"
+  modified_date: "2026-04-20"
+  author: "CX Intelligence Team"
+  description: |
+    A thermal or voltage fault has occurred on a fan tray module.
+    This fault is triggered when the system detects low voltage alarms
+    or invalid sensor read errors on fan tray components.
+  product_ids:
+    - "8808-SYS"
+    - "8818-SYS"
+  os_versions:
+    - "IOS XR 7.5.1"
+    - "IOS XR 8.0.1"
+  component: FAN
+  tags:
+    - thermal
+    - voltage
+    - fan-tray
+  repair_action_workflow_ref: FAN_TRAY_THERMAL_FAULT_REPAIR
+
+conditions:
+  logic: "E1 OR E2"
+  events:
+    - event:
+        id: "E1"
+        type: syslog
+        message_type: "PKT_INFRA-FM-2-FAULT_CRITICAL"
+        description: "Low voltage alarm on fan tray module"
+        path: "syslog"
+        evaluation:
+          type: "regex"
+          value: "PKT_INFRA-FM-2-FAULT_CRITICAL.*voltage alarm.*DECLARE.*\\d+/FT(\\d+).*Input"
+        extraction_parameter:
+          type: extract_to_variable
+          extract_to_variable: fan_tray_id
+          pattern: "FT(\\d+)"
+          group: 1
+        match_count: 1
+        match_period: "0s"
+        clear_event:
+          pattern: "PKT_INFRA-FM-2-FAULT_CRITICAL.*voltage alarm.*CLEAR.*\\d+/FT(\\d+)"
+          lookback_period: "1200s"
+    - event:
+        id: "E2"
+        type: syslog
+        message_type: "PKT_INFRA-FM-4-FAULT_MINOR"
+        description: "Invalid sensor read on fan tray module"
+        path: "syslog"
+        evaluation:
+          type: "regex"
+          value: "PKT_INFRA-FM-4-FAULT_MINOR.*Invalid sensor.*DECLARE.*\\d+/FT(\\d+).*Input"
+        extraction_parameter:
+          type: extract_to_variable
+          extract_to_variable: fan_tray_id
+          pattern: "FT(\\d+)"
+          group: 1
+        match_count: 1
+        match_period: "0s"
+        clear_event:
+          pattern: "PKT_INFRA-FM-4-FAULT_MINOR.*CLEAR.*\\d+/FT(\\d+).*Input"
+          lookback_period: "1200s"

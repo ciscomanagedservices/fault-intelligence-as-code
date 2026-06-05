@@ -1,0 +1,372 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# OPEN DESIGN QUESTIONS
+#
+# 1. Conservative rollback scope: This workflow only supports a clean rollback of
+#    the most recent commit. If the offending change is older or mixed with other
+#    changes, the workflow escalates rather than attempting manual policy surgery.
+# 2. Policy discovery: The workflow extracts the attached outgoing advertisement
+#    policy from the IOS XR neighbor-state line "Policy for outgoing
+#    advertisements is <policy-name>". Confirm this field is consistently
+#    available in target IOS XR outputs.
+# 3. Recovery timeout: The post-clear wait is set to 120 seconds based on the
+#    optimized RG defaults. Confirm this is acceptable for large routing tables.
+# 4. Initial cause confirmation: The triggering Fault Signature syslog is treated
+#    as the authoritative max-prefix signal. The workflow does not require the
+#    volatile IOS XR "Last reset" field to retain the same reason at execution time.
+# ──────────────────────────────────────────────────────────────────────────────
+
+workflow:
+  metadata:
+    name: BGP_NEIGHBOR_MAX_PREFIX_LIMIT_EXCEEDED_REPAIR
+    id: "RAW000003"
+    alert_def_id: "AD000003"
+    version: "1.1.4"
+    description: |
+      Diagnoses and repairs an IOS XR BGP neighbor session that was torn down by
+      the remote peer after the local router exceeded the peer's inbound
+      maximum-prefix limit. The triggering Fault Signature syslog is treated as
+      the authoritative max-prefix evidence; the workflow only checks current BGP
+      neighbor state to decide whether remediation is still needed. If the session
+      remains down, it identifies the attached outgoing advertisement policy,
+      verifies that the most recent commit is a safe rollback candidate, rolls
+      back the latest commit, clears the BGP session, and verifies recovery. If the session has
+      already recovered, the workflow resolves without making changes. If the
+      rollback path is unclear or the session does not recover, the workflow
+      escalates with evidence.
+
+  inputs:
+    - name: neighbor_ip
+      source: "{{ alert_vars.neighbor_ip }}"
+      type: string
+      description: "IP address of the affected BGP neighbor extracted by FS000003"
+    - name: vrf_name
+      source: "{{ alert_vars.vrf_name }}"
+      type: string
+      description: "VRF name extracted by FS000003"
+    - name: neighbor_as
+      source: "{{ alert_vars.neighbor_as }}"
+      type: string
+      description: "Remote AS number extracted by FS000003"
+
+  action_groups: []
+
+  steps:
+    - step_id: "1"
+      name: confirm_neighbor_session_state
+      description: |
+        Confirm whether the affected BGP neighbor still requires remediation. The
+        max-prefix cause is established by FS000003/AD000003 at alert time from
+        the ROUTING-BGP-5-ADJCHANGE syslog. This step intentionally does not use
+        the live "Last reset" field because IOS XR can overwrite or normalize
+        that field after subsequent BGP reset activity.
+      validation:
+        eval_cli:
+          commands:
+            - "show bgp neighbors {{ neighbor_ip }} | include \"BGP state\""
+          pattern: "BGP state = (Established|Idle|Active|Connect|OpenSent|OpenConfirm)"
+          outputs:
+            - name: bgp_state
+              source: "{{ result.groups[0] }}"
+              type: string
+              description: "Current BGP finite-state-machine state for the affected neighbor"
+            - name: session_state_found
+              source: "{{ result.matched }}"
+              type: boolean
+              description: "True when the neighbor BGP state is visible in command output"
+            - name: session_down
+              source: "{{ result.matched }}"
+              type: boolean
+              description: "True when the BGP state output was parsed; use bgp_state to determine whether it is established or down"
+      action_select:
+        - action_id: "1a"
+          name: session_requires_remediation
+          description: "The triggering syslog identified max-prefix and the neighbor is still not Established."
+          conditions:
+            - condition: "bgp_state == \"Idle\" or bgp_state == \"Active\" or bgp_state == \"Connect\" or bgp_state == \"OpenSent\" or bgp_state == \"OpenConfirm\""
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "2"
+        - action_id: "1b"
+          name: session_already_recovered
+          description: "The neighbor is already Established, so no rollback or clear is required."
+          conditions:
+            - condition: "bgp_state == \"Established\""
+          action_groups:
+            - actions:
+                - resolve:
+                    message: |
+                      BGP neighbor {{ neighbor_ip }} in VRF {{ vrf_name }} is already Established.
+                      The original max-prefix alert was confirmed by FS000003/AD000003, but no
+                      active remediation is required at this time.
+        - action_id: "1c"
+          name: session_state_not_determined
+          description: "The workflow could not determine the current BGP neighbor state."
+          conditions:
+            - condition: "default"
+          action_groups:
+            - actions:
+                - escalate:
+                    type: open_support_case
+                    message: |
+                      Unable to determine the current BGP state for neighbor {{ neighbor_ip }} in
+                      VRF {{ vrf_name }}. The original max-prefix alert was confirmed by the
+                      triggering syslog, but automated rollback cannot proceed without current
+                      neighbor state.
+                    data:
+                      commands:
+                        - "show bgp neighbors {{ neighbor_ip }}"
+                        - "show logging | include {{ neighbor_ip }}"
+                      vars:
+                        - neighbor_ip
+                        - vrf_name
+                        - neighbor_as
+
+    - step_id: "2"
+      name: identify_attached_export_policy
+      description: |
+        Extract the outgoing advertisement policy currently attached to the
+        affected neighbor from the IOS XR "Policy for outgoing advertisements
+        is <policy-name>" line. This is used to determine whether the most
+        recent commit and rollback preview are relevant to the fault.
+      validation:
+        eval_cli:
+          commands:
+            - "show bgp neighbors {{ neighbor_ip }} | include \"Policy for outgoing advertisements\""
+          pattern: "Policy for outgoing advertisements is\\s+(\\S+)"
+          outputs:
+            - name: policy_name
+              source: "{{ result.groups[0] }}"
+              type: string
+              description: "Outgoing advertisement policy attached to the neighbor"
+            - name: policy_found
+              source: "{{ result.matched }}"
+              type: boolean
+              description: "True when an outgoing advertisement policy is visible"
+      action_select:
+        - action_id: "2a"
+          name: policy_identified
+          description: "The neighbor's outgoing advertisement policy was identified successfully."
+          conditions:
+            - condition: "policy_found == True"
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "3"
+        - action_id: "2b"
+          name: policy_not_visible
+          description: "No outgoing advertisement policy could be identified from neighbor state."
+          conditions:
+            - condition: "default"
+          action_groups:
+            - actions:
+                - escalate:
+                    type: open_support_case
+                    message: |
+                      Unable to identify the outgoing advertisement policy for BGP neighbor {{ neighbor_ip }}.
+                      A safe automated rollback cannot be selected.
+                    data:
+                      commands:
+                        - "show bgp neighbors {{ neighbor_ip }}"
+                        - "show running-config router bgp neighbor {{ neighbor_ip }}"
+                      vars:
+                        - neighbor_ip
+                        - vrf_name
+                        - neighbor_as
+
+    - step_id: "3"
+      name: confirm_latest_commit_is_relevant
+      description: |
+        Check whether the most recent configuration commit appears relevant to the
+        attached export policy or an associated prefix-set. This workflow only
+        supports rollback of a clearly offending latest commit. When the latest
+        commit is relevant, roll it back directly and proceed to BGP session
+        clearing.
+      validation:
+        eval_cli:
+          commands:
+            - "show configuration commit changes last 1"
+          pattern: "(?s){{ policy_name }}|prefix-set"
+          outputs:
+            - name: latest_commit_relevant
+              source: "{{ result.matched }}"
+              type: boolean
+              description: "True when the latest commit references the attached policy or a prefix-set"
+      action_select:
+        - action_id: "3a"
+          name: apply_latest_commit_rollback
+          description: "The latest commit is relevant; roll back the latest commit."
+          conditions:
+            - condition: "latest_commit_relevant == True"
+          action_groups:
+            - actions:
+                - exec_cli:
+                    command: "rollback configuration last 1"
+                - wait:
+                    duration: 5
+                - goto:
+                    step_id: "4"
+        - action_id: "3b"
+          name: latest_commit_not_candidate
+          description: "The latest commit does not clearly match the attached policy or a related prefix-set."
+          conditions:
+            - condition: "default"
+          action_groups:
+            - actions:
+                - escalate:
+                    type: open_support_case
+                    message: |
+                      The latest configuration commit is not a clear rollback candidate for the
+                      max-prefix fault on neighbor {{ neighbor_ip }}. This workflow stops rather than
+                      attempting rollback of an older or ambiguous change.
+                    data:
+                      commands:
+                        - "show configuration commit list"
+                        - "show configuration commit changes last 5"
+                        - "show bgp neighbors {{ neighbor_ip }} | include policy"
+                      vars:
+                        - neighbor_ip
+                        - vrf_name
+                        - neighbor_as
+                        - policy_name
+
+    - step_id: "4"
+      name: clear_bgp_session
+      description: |
+        After rollback, clear the BGP session using the correct command for the
+        default or non-default VRF, then allow up to 120 seconds for recovery.
+      validation:
+        eval_var:
+          var_name: vrf_name
+          operator: eq
+          value: default
+      action_select:
+        - action_id: "4a"
+          name: clear_default_vrf_session
+          description: "The neighbor is in the default VRF."
+          conditions:
+            - condition: "vrf_name == \"default\""
+          action_groups:
+            - actions:
+                - exec_cli:
+                    command: "clear bgp {{ neighbor_ip }}"
+                - wait:
+                    duration: 120
+                - goto:
+                    step_id: "5"
+        - action_id: "4b"
+          name: clear_nondefault_vrf_session
+          description: "The neighbor is in a non-default VRF."
+          conditions:
+            - condition: "default"
+          action_groups:
+            - actions:
+                - exec_cli:
+                    command: "clear bgp vrf {{ vrf_name }} {{ neighbor_ip }}"
+                - wait:
+                    duration: 120
+                - goto:
+                    step_id: "5"
+
+    - step_id: "5"
+      name: verify_session_recovery
+      description: |
+        Confirm that the BGP session returned to Established state within the
+        120-second recovery window.
+      validation:
+        eval_cli:
+          commands:
+            - "show bgp neighbors {{ neighbor_ip }} | include \"BGP state\""
+          pattern: "BGP state = Established"
+          outputs:
+            - name: session_established
+              source: "{{ result.matched }}"
+              type: boolean
+              description: "True when the BGP session has recovered"
+      action_select:
+        - action_id: "5a"
+          name: session_recovered
+          description: "The BGP session returned to Established state."
+          conditions:
+            - condition: "session_established == True"
+          action_groups:
+            - actions:
+                - resolve:
+                    message: |
+                      BGP neighbor {{ neighbor_ip }} in VRF {{ vrf_name }} recovered to Established
+                      state after rollback of the latest configuration change and session reset.
+        - action_id: "5b"
+          name: session_not_recovered
+          description: "The BGP session did not recover within the expected time window."
+          conditions:
+            - condition: "default"
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "6"
+
+    - step_id: "6"
+      name: classify_failed_recovery
+      description: |
+        Determine whether the same max-prefix CEASE is still recurring after the
+        rollback. If not, treat the remaining failure as a different BGP adjacency
+        issue and escalate with evidence.
+      validation:
+        eval_logs:
+          lookback_time: 120
+          pattern: "%ROUTING-BGP-5-ADJCHANGE.*neighbor\\s+{{ neighbor_ip }}\\s+Down.*Maximum Number of Prefixes Reached"
+          outputs:
+            - name: repeated_max_prefix_cease
+              source: "{{ result.matched }}"
+              type: boolean
+              description: "True when the same max-prefix CEASE recurs after rollback"
+      action_select:
+        - action_id: "6a"
+          name: same_cease_recurred
+          description: "The same max-prefix CEASE recurred after rollback."
+          conditions:
+            - condition: "repeated_max_prefix_cease == True"
+          action_groups:
+            - actions:
+                - escalate:
+                    type: open_support_case
+                    message: |
+                      BGP neighbor {{ neighbor_ip }} in VRF {{ vrf_name }} continued to hit the same
+                      max-prefix CEASE after rollback and session reset. Additional routing policy
+                      investigation is required.
+                    data:
+                      commands:
+                        - "show bgp neighbors {{ neighbor_ip }}"
+                        - "show configuration commit list"
+                        - "show configuration commit changes last 5"
+                        - "show rpl route-policy {{ policy_name }}"
+                        - "show logging | include {{ neighbor_ip }}"
+                      vars:
+                        - neighbor_ip
+                        - vrf_name
+                        - neighbor_as
+                        - policy_name
+        - action_id: "6b"
+          name: different_postrollback_issue
+          description: "The session still failed, but the same max-prefix CEASE was not seen again."
+          conditions:
+            - condition: "default"
+          action_groups:
+            - actions:
+                - escalate:
+                    type: open_support_case
+                    message: |
+                      BGP neighbor {{ neighbor_ip }} in VRF {{ vrf_name }} did not recover within
+                      120 seconds after rollback, but the same max-prefix CEASE was not observed
+                      again. Treat this as a different BGP adjacency issue requiring deeper review.
+                    data:
+                      commands:
+                        - "show bgp neighbors {{ neighbor_ip }}"
+                        - "show bgp ipv4 unicast summary | include {{ neighbor_ip }}"
+                        - "show logging | include {{ neighbor_ip }}"
+                        - "show tcp brief | include {{ neighbor_ip }}"
+                      vars:
+                        - neighbor_ip
+                        - vrf_name
+                        - neighbor_as
+                        - policy_name

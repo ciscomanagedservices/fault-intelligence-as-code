@@ -1,0 +1,32 @@
+services:
+  # ---- Webhook relay (Splunk -> OpenCode, Webex callbacks) ----------------
+  relay:
+    build: .
+    container_name: alert-pipeline
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      # Defaults that .env can override; keeps INGEST_PORT in sync with the
+      # published port above and ensures host.docker.internal is reachable.
+      - OPENCODE_URL=${OPENCODE_URL:-http://host.docker.internal:4096}
+      - OPENCODE_SERVER_USERNAME=${OPENCODE_SERVER_USERNAME:-opencode}
+      - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-}
+      - REMEDIATION_MODE=${REMEDIATION_MODE:-strict}
+      - INGEST_PORT=8080
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-}
+      - WEBEX_BOT_TOKEN=${WEBEX_BOT_TOKEN:-}
+      - WEBEX_ROOM_ID=${WEBEX_ROOM_ID:-}
+      - SPLUNK_UPSTREAM_URL=${SPLUNK_UPSTREAM_URL:-}
+      - SPLUNK_VERIFY_TLS=${SPLUNK_VERIFY_TLS:-false}
+      - RADKIT_MCP_URL=${RADKIT_MCP_URL:-http://host.docker.internal:8000/mcp}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

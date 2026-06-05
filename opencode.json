@@ -1,0 +1,48 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "github-copilot/claude-sonnet-4.6",
+  "enabled_providers": ["github-copilot"],
+  "agent": {
+    "network-troubleshooter": {
+      "tools": { "radkit_*": true }
+    },
+    "kb-reader": {
+      "tools": { "radkit_*": false }
+    },
+    "kb-curator": {
+      "tools": { "radkit_*": false }
+    },
+    "ia-reader": {
+      "tools": { "radkit_*": false }
+    },
+    "ia-curator": {
+      "tools": { "radkit_*": false }
+    }
+  },
+  "mcp": {
+    "radkit": {
+      "type": "remote",
+      "url": "http://localhost:8000/mcp",
+      "enabled": true,
+      "timeout": 30000
+    },
+    "cisco-support": {
+      "type": "local",
+      "command": ["npx", "-y", "mcp-cisco-support@latest"],
+      "environment": {
+        "CISCO_CLIENT_ID": "{env:CISCO_CLIENT_ID}",
+        "CISCO_CLIENT_SECRET": "{env:CISCO_CLIENT_SECRET}",
+        "SUPPORT_API": "enhanced_analysis,bug,case,eox,psirt,product,software"
+      },
+      "enabled": true
+    },
+    "cisco-docs": {
+      "type": "remote",
+      "url": "https://docs-ai.cloudapps.cisco.com/mcp",
+      "headers": {
+        "X-API-Key": "{env:CISCO_DOCS_API_KEY}"
+      },
+      "enabled": true
+    }
+  }
+}

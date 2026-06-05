@@ -1,0 +1,2278 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI Agents, RAG, and MCP for Network Ops - DEVNET-3171, Cisco Live US 2026
+">
+      
+      
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../concepts/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Authoring Workflow - Fault Intelligence as Code</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#authoring-workflow" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Fault Intelligence as Code" class="md-header__button md-logo" aria-label="Fault Intelligence as Code" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Fault Intelligence as Code
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Authoring Workflow
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="cyan"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Fault Intelligence as Code" class="md-nav__button md-logo" aria-label="Fault Intelligence as Code" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Fault Intelligence as Code
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Quickstart
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start Here
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/local-agent-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Agent Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/lab-environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lab Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/artifact-authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Artifact Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/kb-curator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KB Curator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/knowledge-base/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge and Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/agentic-concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agentic Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fault Intelligence
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Fault Intelligence
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring Workflow
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#skill-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skill Map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario Layout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#end-to-end-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        End-to-End Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-start-and-configure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Start and Configure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-research-the-fault" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Research the Fault
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-create-draft-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Create Draft Artifacts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-optimize-the-remediation-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Optimize the Remediation Guide
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-derive-fs-and-raw-from-the-reviewed-rg" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Derive FS and RAW from the Reviewed RG
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-generate-raw-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Generate RAW Tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-review-before-publishing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Review Before Publishing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-publish" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Publish
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-wire-splunk-alerting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Wire Splunk Alerting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-explore-published-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Explore Published Artifacts
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../remediation-guides/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remediation Guides
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fault-signatures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fault Signatures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../repair-action-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Repair Action Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../test-framework/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RAW Test Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cross-references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cross-References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best Practices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../health-intelligence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Health Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/opencode-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenCode Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/execution-modes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Execution Modes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/webex-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Webex Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/environment-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/demo-walkthrough/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo Walkthrough
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/adapting-to-your-lab/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapting to Your Lab
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_4" id="__nav_6_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run Modes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run Modes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/headed-mode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Headed Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/headless-mode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Headless Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/lessons-learned/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lessons Learned
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#skill-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skill Map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario Layout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#end-to-end-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        End-to-End Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-start-and-configure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Start and Configure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-research-the-fault" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Research the Fault
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-create-draft-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Create Draft Artifacts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-optimize-the-remediation-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Optimize the Remediation Guide
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-derive-fs-and-raw-from-the-reviewed-rg" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Derive FS and RAW from the Reviewed RG
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-generate-raw-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Generate RAW Tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-review-before-publishing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Review Before Publishing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-publish" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Publish
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-wire-splunk-alerting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Wire Splunk Alerting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-explore-published-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Explore Published Artifacts
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="authoring-workflow">Authoring Workflow<a class="headerlink" href="#authoring-workflow" title="Permanent link">&para;</a></h1>
+<p>The <code>ia-curator</code> agent is the supported path for adding or changing fault scenarios. Use it as a guided workflow, not as a one-off generator: research prepares evidence, creation drafts and validates the artifacts, optimization tightens the Remediation Guide, test authoring adds deterministic RAW coverage, and publishing assigns final IDs and updates indexes.</p>
+<p>OpenCode is the primary interface for this workflow. Select <code>ia-curator</code> and paste the prompts shown below. Manual commands are included only as fallback or reference.</p>
+<h2 id="skill-map">Skill Map<a class="headerlink" href="#skill-map" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Skill</th>
+<th>Ask <code>ia-curator</code> to...</th>
+<th>Main outputs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ia-start</code></td>
+<td>Workspace onboarding, MCP checks, <code>ia-config.yml</code> setup, and discovery of in-progress drafts or research folders.</td>
+<td>Updated <code>ia-config.yml</code>, setup status, next-step guidance.</td>
+</tr>
+<tr>
+<td><code>ia-research</code></td>
+<td>Structured research before artifact creation. It can start from syslogs, SRs, defects, reference files, or sparse single-source input.</td>
+<td><code>research/&lt;issue-name&gt;/cisco-support-findings.md</code>, <code>cisco-docs-findings.md</code>, and <code>research-summary.md</code>.</td>
+</tr>
+<tr>
+<td><code>ia-create</code></td>
+<td>Draft RG, FS, and RAW artifacts from research, syslogs, CLI output, existing guides, or free-form source material.</td>
+<td><code>ia-drafts/AD000000-&lt;slug&gt;/</code> with RG/FS/RAW artifacts and companion analysis docs.</td>
+</tr>
+<tr>
+<td><code>ia-optimize</code></td>
+<td>Improve an existing RG or raw troubleshooting guide through questionnaire, draft, and refinement modes.</td>
+<td>Optimized <code>.md</code> RG files, gap markers, clarifying questions, and optimization summaries.</td>
+</tr>
+<tr>
+<td><code>raw-test-author</code></td>
+<td>Create and validate deterministic RAW test bundles for terminal paths and approvals.</td>
+<td><code>tests/&lt;RAW######&gt;-&lt;slug&gt;.tests.yml</code> plus validator/headless-runner results.</td>
+</tr>
+<tr>
+<td><code>ia-publish</code></td>
+<td>Allocate real IDs, copy selected drafts into <code>intelligence-artifacts/</code>, preserve tests/docs, update indexes, and open a PR.</td>
+<td>Published artifact folder, refreshed <code>index.md</code> / <code>index.json</code>, PR-ready git changes.</td>
+</tr>
+<tr>
+<td><code>ia-explorer</code></td>
+<td>Regenerate the standalone artifact explorer after published index changes.</td>
+<td><code>docs/index.html</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="scenario-layout">Scenario Layout<a class="headerlink" href="#scenario-layout" title="Permanent link">&para;</a></h2>
+<p>A published fault scenario is an Alert Definition folder under <code>intelligence-artifacts/</code>. Draft folders under <code>ia-drafts/</code> use the same shape with placeholder IDs.</p>
+<div class="highlight"><pre><span></span><code>intelligence-artifacts/
+  AD000004-example-fault/
+    FS000004-EXAMPLE_FAULT.yml
+    RAW000004-EXAMPLE_FAULT_REPAIR.yml
+    RG000004-example-fault-guide.md
+    tests/
+      RAW000004-EXAMPLE_FAULT_REPAIR.tests.yml
+    docs/
+      FS000004.analysis.md
+      RAW000004.analysis.md
+      RG000004.analysis.md
+</code></pre></div>
+<p>Keep the six-digit suffix aligned across AD, FS, RAW, and RG names. Only artifacts and the <code>tests/</code> folder belong at the AD root; companion analysis, notes, screenshots, and other supporting files belong under <code>docs/</code>.</p>
+<h2 id="end-to-end-flow">End-to-End Flow<a class="headerlink" href="#end-to-end-flow" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>graph TD
+    START[ia-start] --&gt; RESEARCH{Need more evidence?}
+    RESEARCH --&gt;|yes| IARESEARCH[ia-research]
+    RESEARCH --&gt;|no| CREATE[ia-create source inventory]
+    IARESEARCH --&gt; CREATE
+    CREATE --&gt; RG[Draft RG]
+    RG --&gt; OPT{Need RG hardening?}
+    OPT --&gt;|yes| IAOPT[ia-optimize questionnaire / draft / refine]
+    OPT --&gt;|no| DERIVE[Derive FS + RAW from RG]
+    IAOPT --&gt; DERIVE
+    DERIVE --&gt; TESTS[raw-test-author]
+    TESTS --&gt; VALIDATE[Validate artifacts + test bundles]
+    VALIDATE --&gt; PUBLISH[ia-publish]
+    PUBLISH --&gt; EXPLORER[ia-explorer]</code></pre>
+<h2 id="1-start-and-configure">1. Start and Configure<a class="headerlink" href="#1-start-and-configure" title="Permanent link">&para;</a></h2>
+<p>Select the <code>ia-curator</code> agent in OpenCode and paste:</p>
+<div class="highlight"><pre><span></span><code>ia-start
+</code></pre></div>
+<p>It validates Cisco Docs and Cisco Support MCP connectivity, reads or populates <code>ia-config.yml</code>, detects in-progress folders under <code>ia-drafts/</code> and <code>research/</code>, and explains which IA skill to run next. Missing Cisco MCP servers do not block every workflow, but they limit <code>ia-research</code> and <code>ia-optimize</code> enrichment.</p>
+<p><code>ia-config.yml</code> stores workspace identity, product and OS scope, default metadata, validation rules, naming prefixes, and output preferences. <code>ia-create</code> applies this config during generation and surfaces allow-list warnings when generated metadata falls outside configured values.</p>
+<h2 id="2-research-the-fault">2. Research the Fault<a class="headerlink" href="#2-research-the-fault" title="Permanent link">&para;</a></h2>
+<p>Use <code>ia-research</code> when the source material is incomplete, when you only have an SR or defect ID, or when the artifact should be grounded in Cisco support/docs evidence:</p>
+<div class="highlight"><pre><span></span><code>ia-research %ROUTING-BGP-5-ADJCHANGE maximum number of prefixes reached on IOS XR
+</code></pre></div>
+<p>The skill collects or enriches these inputs:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>What <code>ia-research</code> does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Syslog or alarm strings</td>
+<td>Searches support/docs for meaning, causes, remediation, and related defects.</td>
+</tr>
+<tr>
+<td>SR IDs</td>
+<td>Fetches case details and extracts syslogs, linked defects, platform context, and resolution notes.</td>
+</tr>
+<tr>
+<td>Defect IDs</td>
+<td>Fetches bug details, affected platforms, symptoms, workarounds, and fixed releases.</td>
+</tr>
+<tr>
+<td>Reference files</td>
+<td>Reads explicitly supplied files and extracts useful signals.</td>
+</tr>
+<tr>
+<td>Sparse single-source input</td>
+<td>Runs an enrichment pass first, then performs broader research with the discovered signals.</td>
+</tr>
+</tbody>
+</table>
+<p>Outputs are written to <code>research/&lt;issue-name&gt;/</code>. The key handoff file is <code>research-summary.md</code>, which includes artifact-specific recommendations based on the artifact types selected during research.</p>
+<h2 id="3-create-draft-artifacts">3. Create Draft Artifacts<a class="headerlink" href="#3-create-draft-artifacts" title="Permanent link">&para;</a></h2>
+<p>Ask <code>ia-curator</code> to create the draft with the research folder, syslogs, existing guide, or other source material:</p>
+<div class="highlight"><pre><span></span><code>ia-create a new BGP maximum-prefix scenario from research/bgp-max-prefix-adjchange-xr/
+</code></pre></div>
+<p><code>ia-create</code> starts with two interactive gates:</p>
+<ol>
+<li>Research gate: asks whether to run <code>ia-research</code> first.</li>
+<li>Source inventory: asks which source types are available and where they live.</li>
+</ol>
+<p>The recommended path is RG first. <code>ia-create</code> drafts a Markdown Remediation Guide, writes a companion analysis file, and then asks whether to review the RG before deriving FS and RAW.</p>
+<pre class="mermaid"><code>graph LR
+    SRC[Source material or research] --&gt; RG[Draft RG Markdown]
+    RG --&gt; REVIEW[Engineer review/edit]
+    REVIEW --&gt; FS[Derive single FS]
+    REVIEW --&gt; RAW[Derive RAW]</code></pre>
+<p>Selecting RG, FS, and RAW together is supported, but FS and RAW will be derived from an unreviewed RG draft. For new scenarios, review or optimize the RG before deriving YAML whenever possible.</p>
+<h2 id="4-optimize-the-remediation-guide">4. Optimize the Remediation Guide<a class="headerlink" href="#4-optimize-the-remediation-guide" title="Permanent link">&para;</a></h2>
+<p>Use <code>ia-optimize</code> when the RG is too vague, too generic, missing pass/fail examples, missing thresholds, or not platform-specific enough:</p>
+<div class="highlight"><pre><span></span><code>ia-optimize ia-drafts/AD000000-example-fault/RG000000-example-fault-guide.md
+</code></pre></div>
+<p><code>ia-optimize</code> has three modes:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Trigger</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Questionnaire</td>
+<td>Source has no <code>## Clarifying Questions</code> section.</td>
+<td>Generates targeted SME questions mapped to RG sections.</td>
+</tr>
+<tr>
+<td>First draft</td>
+<td>Questionnaire has answered <code>&gt; **Answer:**</code> blocks.</td>
+<td>Generates an optimized RG with concrete CLI, pass/fail output, decision branches, and <code>[GAP]</code> markers for unanswered items.</td>
+</tr>
+<tr>
+<td>Refinement</td>
+<td>Optimized RG has newly answered questions.</td>
+<td>Replaces matching gaps surgically and updates the optimization summary.</td>
+</tr>
+</tbody>
+</table>
+<p>During optimization, the skill can optionally query Cisco Support and Cisco Docs for SRs, defects, platform CLI, thresholds, and known fixed releases. The optimized RG still uses the same RG template as <code>ia-create</code>, so it can be fed back into <code>ia-create</code> to derive or regenerate FS and RAW.</p>
+<h2 id="5-derive-fs-and-raw-from-the-reviewed-rg">5. Derive FS and RAW from the Reviewed RG<a class="headerlink" href="#5-derive-fs-and-raw-from-the-reviewed-rg" title="Permanent link">&para;</a></h2>
+<p>When the RG is ready, return to <code>ia-create</code> and use the post-generation option to create FS + RAW from the edited RG.</p>
+<p><code>ia-create</code> derives:</p>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Derived from</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fault Signature</td>
+<td>RG Triggering Events</td>
+<td>Multiple related syslogs become multiple events in one FS, tied together by <code>conditions.logic</code>.</td>
+</tr>
+<tr>
+<td>Repair Action Workflow</td>
+<td>RG Diagnosis &amp; Repair Steps</td>
+<td>Decision points become <code>action_select</code> branches; inputs come from FS extracted variables or alert payload.</td>
+</tr>
+<tr>
+<td>Companion analysis</td>
+<td>Source mappings and assumptions</td>
+<td>Analysis files live under <code>docs/</code> and record decisions, gaps, and open review items.</td>
+</tr>
+</tbody>
+</table>
+<p>Primary prompt for validation:</p>
+<div class="highlight"><pre><span></span><code>ia-create validate ia-drafts/AD000000-&lt;issue-name&gt;/
+</code></pre></div>
+<p>Manual fallback:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>.opencode/skills/ia-create/scripts/validate_artifact.py<span class="w"> </span>ia-drafts/AD000000-&lt;issue-name&gt;/
+</code></pre></div>
+<p>Fix validation errors before moving on. Warnings should be reviewed, especially cross-reference, naming, and allow-list warnings.</p>
+<h2 id="6-generate-raw-tests">6. Generate RAW Tests<a class="headerlink" href="#6-generate-raw-tests" title="Permanent link">&para;</a></h2>
+<p>RAW tests are part of the authoring workflow, not an afterthought. After a RAW exists, ask <code>ia-curator</code> to use <code>raw-test-author</code> for a specific RAW.</p>
+<p>Primary prompt:</p>
+<div class="highlight"><pre><span></span><code>raw-test-author create tests for ia-drafts/AD000000-&lt;issue-name&gt;/RAW000000-&lt;slug&gt;.yml
+</code></pre></div>
+<p><code>raw-test-author</code> creates one co-located bundle per RAW:</p>
+<div class="highlight"><pre><span></span><code>ia-drafts/AD000000-&lt;issue-name&gt;/tests/RAW000000-&lt;slug&gt;.tests.yml
+</code></pre></div>
+<p>It reads the RAW and paired FS, enumerates terminal leaves, creates synthetic CLI/log fixtures, and adds scripted approvals for <code>exec_cli</code> and <code>config_cli</code> paths. Good coverage includes resolution, escalation, failure where applicable, approval denial, missing or malformed inputs, and every deterministic terminal branch.</p>
+<p>Validate the bundle before publishing:</p>
+<div class="highlight"><pre><span></span><code>raw-test-author validate ia-drafts/AD000000-&lt;issue-name&gt;/tests/RAW000000-&lt;slug&gt;.tests.yml
+</code></pre></div>
+<p>Run the bundle through the troubleshooting agent test mode when you want to exercise the workflow the same way a user-facing prompt does:</p>
+<div class="highlight"><pre><span></span><code>Run the RAW test bundle in test mode.
+
+Simulate network-device responses from the test bundle. Do not use RADKit, Splunk, Webex, Docker, or the alert simulator script. Use the network-troubleshooter test-mode behavior and write the generated test artifacts under logs/test-runs/.
+
+{
+  &quot;alert_def_id&quot;: &quot;AD000000&quot;,
+  &quot;device_hostname&quot;: &quot;&lt;test-device&gt;&quot;,
+  &quot;mode&quot;: &quot;strict&quot;,
+  &quot;test_bundle_path&quot;: &quot;ia-drafts/AD000000-&lt;issue-name&gt;/tests/RAW000000-&lt;slug&gt;.tests.yml&quot;,
+  &quot;webex_notify&quot;: false
+}
+</code></pre></div>
+<p>Manual fallback:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>.opencode/skills/raw-test-author/scripts/validate_test_bundle.py<span class="w"> </span>ia-drafts/AD000000-&lt;issue-name&gt;/tests/RAW000000-&lt;slug&gt;.tests.yml
+python<span class="w"> </span>.opencode/skills/raw-test-author/scripts/validate_test_bundle.py<span class="w"> </span>ia-drafts/AD000000-&lt;issue-name&gt;/tests/RAW000000-&lt;slug&gt;.tests.yml<span class="w"> </span>--strict
+python<span class="w"> </span>scripts/run_raw_tests.py<span class="w"> </span>--bundle<span class="w"> </span>ia-drafts/AD000000-&lt;issue-name&gt;/tests/RAW000000-&lt;slug&gt;.tests.yml
+</code></pre></div>
+<p>Do not mark deterministic paths <code>agent_only</code> just to bypass the runner. Patch the fixture or runner when deterministic RAW behavior is not covered.</p>
+<h2 id="7-review-before-publishing">7. Review Before Publishing<a class="headerlink" href="#7-review-before-publishing" title="Permanent link">&para;</a></h2>
+<p>Before publishing a scenario:</p>
+<ul>
+<li>[ ] RG has been reviewed or optimized and has no unresolved critical gaps.</li>
+<li>[ ] FS, RAW, and RG suffixes match or use draft placeholders before publish.</li>
+<li>[ ] Message samples use sanitized addresses, names, and ASNs.</li>
+<li>[ ] RAW inputs are supplied by the FS, alert payload, or prior workflow outputs.</li>
+<li>[ ] <code>exec_cli</code> and <code>config_cli</code> paths have approval coverage.</li>
+<li>[ ] Test bundles cover deterministic terminal paths and pass strict validation plus the headless runner.</li>
+<li>[ ] Companion analysis files are under <code>docs/</code>.</li>
+<li>[ ] Scenario docs explain lab assumptions, safe cleanup, and Splunk integration if applicable.</li>
+</ul>
+<h2 id="8-publish">8. Publish<a class="headerlink" href="#8-publish" title="Permanent link">&para;</a></h2>
+<p>Use <code>ia-publish</code> to move reviewed draft artifacts from <code>ia-drafts/</code> into <code>intelligence-artifacts/</code>:</p>
+<div class="highlight"><pre><span></span><code>ia-publish
+</code></pre></div>
+<p><code>ia-publish</code> selects draft artifacts, allocates real IDs, rewrites placeholder IDs, preserves <code>tests/</code> and <code>docs/</code>, validates allocated artifacts, prompts for missing RAW test coverage, updates <code>intelligence-artifacts/index.md</code> and <code>index.json</code>, and prepares Git/GitHub pull-request-ready changes. Publishing has a soft test-coverage gate: missing bundles can be authored immediately, skipped with a warning, or used to abort the publish.</p>
+<h2 id="9-wire-splunk-alerting">9. Wire Splunk Alerting<a class="headerlink" href="#9-wire-splunk-alerting" title="Permanent link">&para;</a></h2>
+<p>Use the Splunk generator when the FS uses syslog events:</p>
+<p>Primary prompt for Builder:</p>
+<div class="highlight"><pre><span></span><code>Generate Splunk alerting for AD000004
+</code></pre></div>
+<p>Manual fallback:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>scripts/splunk-alert-def-generator
+python<span class="w"> </span>fs_to_alert.py<span class="w"> </span>AD000004<span class="w"> </span>--repo-root<span class="w"> </span>../..<span class="w"> </span>--webhook-url<span class="w"> </span>http://&lt;relay-host&gt;:8080/fault-alert<span class="w"> </span>--output<span class="w"> </span>ad000004.yml
+python<span class="w"> </span>splunk_alerts.py<span class="w"> </span>--create<span class="w"> </span>--config<span class="w"> </span>ad000004.yml<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SPLUNK_PASSWORD</span><span class="s2">&quot;</span>
+</code></pre></div>
+<h2 id="10-explore-published-artifacts">10. Explore Published Artifacts<a class="headerlink" href="#10-explore-published-artifacts" title="Permanent link">&para;</a></h2>
+<p>Use <code>ia-explorer</code> after publishing to regenerate the standalone artifact explorer:</p>
+<div class="highlight"><pre><span></span><code>ia-explorer
+</code></pre></div>
+<p>It reads <code>intelligence-artifacts/index.json</code>, writes <code>docs/index.html</code>, and opens the explorer. The explorer supports syslog regex search, keyword and ID search, filters, coverage matrix views, message samples, and artifact cross-links.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

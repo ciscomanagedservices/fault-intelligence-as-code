@@ -1,0 +1,281 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# OPEN DESIGN QUESTIONS
+#
+# 1. Should step 5 (process_rma) collect additional platform-specific data
+#    beyond the standard environment commands?
+# 2. Is the 300-second lookback in step 4 sufficient for all deployment
+#    scenarios, or should it be configurable?
+# ──────────────────────────────────────────────────────────────────────────────
+
+workflow:
+  metadata:
+    name: FAN_TRAY_THERMAL_FAULT_REPAIR
+    id: RAW000010
+    alert_def_id: AD000010
+    description: |
+      Repair action workflow for Fan Tray thermal/voltage fault on Cisco 8000 Series.
+      This workflow validates the Fan Tray status, checks voltage and current readings,
+      and determines if an RMA is required.
+    version: "1.0.0"
+
+  inputs:
+    - name: fan_tray_id
+      source: "{{ alert_vars.fan_tray_id }}"
+      type: string
+      description: "Fan tray module number extracted from the fault signature (e.g., 0, 1)"
+
+  action_groups: []
+
+  steps:
+    - step_id: "1"
+      name: identify_faulted_fan_tray
+      description: |
+        Validate that the target Fan Tray is experiencing issues by checking
+        the environment status for the identified location.
+      validation:
+        eval_cli:
+          commands:
+            - "show environment all location 0/FT{{ fan_tray_id }}"
+          pattern: "(Input_Vol|Input_Cur|Power Used)[\\s]+[-]"
+          outputs:
+            - name: has_dash_values
+              source: "{{ result.matched }}"
+              type: boolean
+              description: "True if dash values found indicating sensor failure"
+      action_select:
+        - action_id: "1"
+          name: sensor_failure_detected
+          description: "Dash values detected - sensor read failure confirmed"
+          conditions:
+            - condition: has_dash_values == True
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "5"
+        - action_id: "2"
+          name: no_sensor_failure
+          description: "No dash values - proceed to voltage validation"
+          conditions:
+            - condition: has_dash_values == False
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "2"
+
+    - step_id: "2"
+      name: validate_input_voltage
+      description: |
+        Check the Input Voltage value for the Fan Tray. A value of 0 or
+        greater than 60 volts indicates a failure condition.
+      validation:
+        eval_cli:
+          commands:
+            - "show environment voltage | begin 0/FT{{ fan_tray_id }}"
+          pattern: "0/FT{{ fan_tray_id }}[\\s]+[\\S]+[\\s]+([\\d.]+)"
+          outputs:
+            - name: input_voltage
+              source: "{{ result.groups[0] }}"
+              type: float
+              description: "Input voltage reading for the Fan Tray"
+      action_select:
+        - action_id: "1"
+          name: voltage_zero
+          description: "Input voltage is 0 - Fan Tray is faulty"
+          conditions:
+            - condition: input_voltage == 0
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "5"
+        - action_id: "2"
+          name: voltage_too_high
+          description: "Input voltage exceeds 60V - Fan Tray is faulty"
+          conditions:
+            - condition: input_voltage > 60
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "5"
+        - action_id: "3"
+          name: voltage_normal
+          description: "Input voltage within normal range - proceed to current check"
+          conditions:
+            - condition: input_voltage > 0 and input_voltage <= 60
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "3"
+
+    - step_id: "3"
+      name: validate_input_current
+      description: |
+        Check the Input Current value for the Fan Tray. A value of 0
+        indicates a failure condition.
+      validation:
+        eval_cli:
+          commands:
+            - "show environment current | begin 0/FT{{ fan_tray_id }}"
+          pattern: "0/FT{{ fan_tray_id }}[\\s]+[\\S]+[\\s]+([\\d.]+)"
+          outputs:
+            - name: input_current
+              source: "{{ result.groups[0] }}"
+              type: float
+              description: "Input current reading for the Fan Tray"
+      action_select:
+        - action_id: "1"
+          name: current_zero
+          description: "Input current is 0 - Fan Tray is faulty"
+          conditions:
+            - condition: input_current == 0
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "5"
+        - action_id: "2"
+          name: current_normal
+          description: "Input current is normal - proceed to fault determination"
+          conditions:
+            - condition: input_current > 0
+          action_groups:
+            - actions:
+                - goto:
+                    step_id: "4"
+
+    - step_id: "4"
+      name: all_values_normal
+      description: |
+        All validation checks passed with normal values. Monitor for additional
+        alarms or escalate if issue persists.
+      validation:
+        eval_logs:
+          lookback_time: 300
+          pattern: "PKT_INFRA-FM-.*FAULT.*(voltage|current|thermal).*0/FT{{ fan_tray_id }}"
+          outputs:
+            - name: recent_alarms_found
+              source: "{{ result.matched }}"
+              type: boolean
+              description: "True if recent related alarms are still occurring"
+      action_select:
+        - action_id: "1"
+          name: no_recent_alarms
+          description: "No recent alarms - issue may be intermittent, resolve"
+          conditions:
+            - condition: recent_alarms_found == False
+          action_groups:
+            - actions:
+                - resolve:
+                    message: "Fan Tray 0/FT{{ fan_tray_id }} validation passed. All readings normal."
+        - action_id: "2"
+          name: alarms_persist
+          description: "Alarms persist but no explicit failure - escalate to TAC"
+          conditions:
+            - condition: recent_alarms_found == True
+          action_groups:
+            - actions:
+                - escalate:
+                    type: "open_support_case"
+                    message: |
+                      Fan Tray 0/FT{{ fan_tray_id }} has persistent alarms but all validation
+                      checks passed. Further investigation by Cisco TAC is required.
+                    data:
+                      commands:
+                        - "show logging | include 0/FT{{ fan_tray_id }}"
+                      vars:
+                        - fan_tray_id
+                        - has_dash_values
+
+    - step_id: "5"
+      name: process_rma
+      description: |
+        Fan Tray is confirmed faulty. Sanity-check the fault is still present
+        and initiate RMA. Diagnostic show commands and key variables are
+        attached to the RMA package via escalate.data.
+      validation:
+        eval_cli:
+          commands:
+            - "show environment all location 0/FT{{ fan_tray_id }}"
+          pattern: "0/FT{{ fan_tray_id }}"
+          outputs:
+            - name: fan_tray_still_present
+              source: "{{ result.matched }}"
+              type: boolean
+              description: "Sanity check that the fan tray is still detected before RMA"
+      action_select:
+        - action_id: "1"
+          name: initiate_rma
+          description: "Initiate RMA for the faulty Fan Tray"
+          conditions:
+            - condition: default
+          action_groups:
+            - actions:
+                - escalate:
+                    type: "rma"
+                    message: |
+                      Fan Tray 0/FT{{ fan_tray_id }} has been confirmed faulty.
+                      RMA is required for replacement.
+                    component: "0/FT{{ fan_tray_id }}"
+                    data:
+                      commands:
+                        - "show environment all location 0/FT{{ fan_tray_id }}"
+                        - "show environment voltage | begin 0/FT{{ fan_tray_id }}"
+                        - "show environment current | begin 0/FT{{ fan_tray_id }}"
+                      vars:
+                        - fan_tray_id
+
+    - step_id: "6"
+      name: verify_replacement
+      description: |
+        After the replacement Fan Tray is installed, verify proper operation.
+      validation:
+        and:
+          - eval_cli:
+              commands:
+                - "show environment all location 0/FT{{ fan_tray_id }}"
+              pattern: "(Input_Vol|Input_Cur|Power Used)[\\s]+[-]"
+              negate: true
+              outputs:
+                - name: no_dash_values
+                  source: "{{ result.matched }}"
+                  type: boolean
+                  description: "True if no dash values found (healthy)"
+          - eval_cli:
+              commands:
+                - "show environment voltage | begin 0/FT{{ fan_tray_id }}"
+              pattern: "0/FT{{ fan_tray_id }}[\\s]+[\\S]+[\\s]+([\\d.]+)"
+              outputs:
+                - name: replacement_voltage
+                  source: "{{ result.groups[0] }}"
+                  type: float
+                  description: "Voltage reading after replacement"
+      action_select:
+        - action_id: "1"
+          name: replacement_healthy
+          description: "Replacement Fan Tray is operational and healthy"
+          conditions:
+            - condition: no_dash_values == True and replacement_voltage > 0 and replacement_voltage <= 60
+          action_groups:
+            - actions:
+                - resolve:
+                    message: |
+                      Replacement Fan Tray 0/FT{{ fan_tray_id }} is operational.
+                      Voltage: {{ replacement_voltage }}V. All alarms should clear shortly.
+        - action_id: "2"
+          name: replacement_still_faulty
+          description: "Replacement Fan Tray still showing issues"
+          conditions:
+            - condition: default
+          action_groups:
+            - actions:
+                - escalate:
+                    type: "open_support_case"
+                    message: |
+                      Replacement Fan Tray 0/FT{{ fan_tray_id }} is still showing failure conditions.
+                      Backplane or midplane issue suspected. Cisco TAC investigation required.
+                    data:
+                      commands:
+                        - "show environment all location 0/FT{{ fan_tray_id }}"
+                        - "show environment voltage | begin 0/FT{{ fan_tray_id }}"
+                      vars:
+                        - fan_tray_id
+                        - no_dash_values
+                        - replacement_voltage
