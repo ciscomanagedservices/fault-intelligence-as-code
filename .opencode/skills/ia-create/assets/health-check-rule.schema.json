@@ -1,0 +1,422 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "health-check-rule/v1.0.0",
+  "title": "Health Check Rule",
+  "description": "Schema for Health Intelligence health check rule artifacts.",
+  "type": "object",
+  "required": [
+    "name",
+    "id",
+    "version",
+    "description",
+    "category",
+    "component",
+    "severity",
+    "os_types",
+    "requires",
+    "conditions",
+    "actions",
+    "tags",
+    "created_by",
+    "created_date"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]+$",
+      "description": "Unique rule identifier in UPPERCASE_SNAKE_CASE."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^HCR\\d{6}$",
+      "description": "Unique string ID with HCR prefix and 6-digit zero-padded suffix (e.g. HCR000001, HCR000042)."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version string (e.g., '1.0.0')."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Human-readable description of what this rule checks."
+    },
+    "category": {
+      "type": "string",
+      "enum": ["hardware", "software", "interface", "protocol", "capacity", "security"],
+      "description": "Functional category of the health check."
+    },
+    "component": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Target hardware or software component (e.g., OPTICS, CPU, BGP)."
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["CRITICAL", "MAJOR", "WARNING", "MINOR", "INFO"],
+      "description": "Default severity level for this rule."
+    },
+    "product_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of supported hardware product IDs (PIDs)."
+    },
+    "os_types": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": ["IOS-XR", "NX-OS", "IOS-XE", "SONiC"]
+      },
+      "description": "Supported OS types."
+    },
+    "os_versions": {
+      "type": "string",
+      "description": "Version constraint string (e.g., '>=7.5.0')."
+    },
+    "requires": {
+      "$ref": "#/definitions/requires_block",
+      "description": "Data dependencies — collection lists and parsers this rule depends on."
+    },
+    "conditions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Health check conditions to evaluate.",
+      "items": { "$ref": "#/definitions/condition" }
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Actions to take when conditions are unhealthy.",
+      "items": { "$ref": "#/definitions/action" }
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      },
+      "description": "Classification tags (lowercase only)."
+    },
+    "knowledge_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Links to KB articles, field notices, or documentation."
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Author or team name."
+    },
+    "created_date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "ISO 8601 creation date (YYYY-MM-DD)."
+    }
+  },
+  "definitions": {
+    "requires_block": {
+      "type": "object",
+      "required": ["collection_lists", "parsers"],
+      "additionalProperties": false,
+      "properties": {
+        "collection_lists": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]+$"
+          },
+          "description": "Collection List artifact names this rule depends on."
+        },
+        "parsers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^PARSE_[A-Z][A-Z0-9_]+$"
+          },
+          "description": "Parser artifact names this rule depends on."
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "required": ["id", "name", "description", "eval", "result"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]+$",
+          "description": "Unique condition identifier (lowercase_snake_case). Referenced by actions."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable condition name."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "description": "What this condition checks."
+        },
+        "eval": { "$ref": "#/definitions/eval_block" },
+        "result": { "$ref": "#/definitions/result_block" }
+      }
+    },
+    "eval_block": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["threshold", "range", "pattern", "trend", "comparison", "expression"],
+          "description": "Evaluation logic type."
+        },
+        "threshold": { "$ref": "#/definitions/threshold_eval" },
+        "range": { "$ref": "#/definitions/range_eval" },
+        "pattern": { "$ref": "#/definitions/pattern_eval" },
+        "trend": { "$ref": "#/definitions/trend_eval" },
+        "comparison": { "$ref": "#/definitions/comparison_eval" },
+        "expression": { "$ref": "#/definitions/expression_eval" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "threshold" } } },
+          "then": { "required": ["threshold"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "range" } } },
+          "then": { "required": ["range"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "pattern" } } },
+          "then": { "required": ["pattern"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "trend" } } },
+          "then": { "required": ["trend"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "comparison" } } },
+          "then": { "required": ["comparison"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "expression" } } },
+          "then": { "required": ["expression"] }
+        }
+      ]
+    },
+    "threshold_eval": {
+      "type": "object",
+      "required": ["field", "operator", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "field": { "type": "string", "description": "Parser output field to compare." },
+        "operator": {
+          "type": "string",
+          "enum": ["gt", "gte", "lt", "lte", "eq", "ne"],
+          "description": "Comparison operator."
+        },
+        "value": { "type": "number", "description": "Threshold value." },
+        "unit": { "type": "string", "description": "Unit for display (e.g., dBm, Celsius)." }
+      }
+    },
+    "range_eval": {
+      "type": "object",
+      "required": ["field", "min", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "field": { "type": "string" },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "unit": { "type": "string" }
+      }
+    },
+    "pattern_eval": {
+      "type": "object",
+      "required": ["field", "regex", "match"],
+      "additionalProperties": false,
+      "properties": {
+        "field": { "type": "string" },
+        "regex": { "type": "string", "minLength": 1 },
+        "match": {
+          "type": "boolean",
+          "description": "true = regex should match (healthy), false = regex should not match."
+        }
+      }
+    },
+    "trend_eval": {
+      "type": "object",
+      "required": ["field", "window", "direction", "rate"],
+      "additionalProperties": false,
+      "properties": {
+        "field": { "type": "string" },
+        "window": {
+          "type": "string",
+          "pattern": "^\\d+[smhd]$",
+          "description": "Time window (e.g., '1h', '24h', '7d')."
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["increasing", "decreasing", "stable"]
+        },
+        "rate": {
+          "type": "number",
+          "description": "Change rate threshold that triggers the condition."
+        }
+      }
+    },
+    "comparison_eval": {
+      "type": "object",
+      "required": ["field_a", "operator", "field_b"],
+      "additionalProperties": false,
+      "properties": {
+        "field_a": { "type": "string" },
+        "operator": {
+          "type": "string",
+          "enum": ["gt", "gte", "lt", "lte", "eq", "ne"]
+        },
+        "field_b": { "type": "string" }
+      }
+    },
+    "expression_eval": {
+      "type": "object",
+      "required": ["formula", "variables"],
+      "additionalProperties": false,
+      "properties": {
+        "formula": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Python-like expression using variable names."
+        },
+        "variables": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Parser output field names used in the formula."
+        }
+      }
+    },
+    "result_block": {
+      "type": "object",
+      "required": ["healthy", "unhealthy"],
+      "additionalProperties": false,
+      "properties": {
+        "healthy": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Description when the condition check passes."
+        },
+        "unhealthy": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Description when the condition check fails."
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["trigger", "type", "priority"],
+      "additionalProperties": false,
+      "properties": {
+        "trigger": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]+$",
+          "description": "Condition ID that triggers this action. Must match a conditions[].id."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["alert", "collect_more", "escalate", "remediate"],
+          "description": "Action type."
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["immediate", "scheduled", "advisory"],
+          "description": "Action priority."
+        },
+        "alert": { "$ref": "#/definitions/alert_action" },
+        "collect_more": { "$ref": "#/definitions/collect_more_action" },
+        "escalate": { "$ref": "#/definitions/escalate_action" },
+        "remediate": { "$ref": "#/definitions/remediate_action" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "alert" } } },
+          "then": { "required": ["alert"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "collect_more" } } },
+          "then": { "required": ["collect_more"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "escalate" } } },
+          "then": { "required": ["escalate"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "remediate" } } },
+          "then": { "required": ["remediate"] }
+        }
+      ]
+    },
+    "alert_action": {
+      "type": "object",
+      "required": ["severity", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["CRITICAL", "MAJOR", "WARNING", "MINOR", "INFO"]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Alert message. Supports {{ variable }} substitution."
+        }
+      }
+    },
+    "collect_more_action": {
+      "type": "object",
+      "required": ["collection_list_ref"],
+      "additionalProperties": false,
+      "properties": {
+        "collection_list_ref": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]+$",
+          "description": "Name of the Collection List to execute."
+        }
+      }
+    },
+    "escalate_action": {
+      "type": "object",
+      "required": ["type", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["tac_case", "rma", "engineering"]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Escalation context and details."
+        }
+      }
+    },
+    "remediate_action": {
+      "type": "object",
+      "required": ["workflow_ref"],
+      "additionalProperties": false,
+      "properties": {
+        "workflow_ref": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]+$",
+          "description": "Name of the Repair Action Workflow to execute."
+        }
+      }
+    }
+  }
+}

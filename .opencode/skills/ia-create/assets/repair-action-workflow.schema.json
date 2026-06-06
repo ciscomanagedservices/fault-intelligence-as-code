@@ -1,0 +1,329 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "repair-action-workflow.schema.json",
+  "title": "Repair Action Workflow",
+  "description": "JSON Schema for Fault Intelligence Repair Action Workflow YAML artifacts.",
+  "type": "object",
+  "required": ["workflow"],
+  "additionalProperties": false,
+  "properties": {
+    "workflow": {
+      "type": "object",
+      "required": ["metadata", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "required": ["name", "version"],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]+_REPAIR$",
+              "description": "UPPER_SNAKE_CASE ending with _REPAIR suffix"
+            },
+            "id": {
+              "type": "string",
+              "pattern": "^RAW\\d{6}$",
+              "description": "Unique string ID with RAW prefix and 6-digit zero-padded suffix (e.g. RAW000004, RAW000042)"
+            },
+            "alert_def_id": {
+              "type": "string",
+              "pattern": "^AD\\d{6}$",
+              "description": "ID of the Alert Definition group this RAW belongs to (e.g. AD000004). Matches the parent folder name AD######-<slug>/."
+            },
+            "description": {
+              "type": "string",
+              "minLength": 10
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d+\\.\\d+$"
+            }
+          }
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/input_definition" }
+        },
+        "action_groups": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/reusable_action_group" }
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/step" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "input_definition": {
+      "type": "object",
+      "required": ["name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "source": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["string", "integer", "float", "boolean"]
+        },
+        "description": { "type": "string" }
+      }
+    },
+    "reusable_action_group": {
+      "type": "object",
+      "required": ["name", "actions"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/repair_action" }
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "required": ["step_id", "name", "validation", "action_select"],
+      "additionalProperties": false,
+      "properties": {
+        "step_id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "validation": { "$ref": "#/definitions/validation_action" },
+        "action_select": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/action_select_entry" }
+        }
+      }
+    },
+    "validation_action": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "eval_cli": {
+          "type": "object",
+          "required": ["commands", "pattern"],
+          "additionalProperties": false,
+          "properties": {
+            "commands": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string" }
+            },
+            "pattern": { "type": "string" },
+            "negate": { "type": "boolean" },
+            "outputs": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/output_variable" }
+            }
+          }
+        },
+        "eval_logs": {
+          "type": "object",
+          "required": ["lookback_time", "pattern"],
+          "additionalProperties": false,
+          "properties": {
+            "lookback_time": { "type": "integer", "minimum": 0 },
+            "pattern": { "type": "string" },
+            "outputs": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/output_variable" }
+            }
+          }
+        },
+        "eval_var": {
+          "type": "object",
+          "required": ["var_name", "operator", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "var_name": { "type": "string" },
+            "operator": {
+              "type": "string",
+              "enum": ["eq", "ne", "lt", "le", "ge", "gt"]
+            },
+            "value": {}
+          }
+        },
+        "and": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/validation_action" }
+        },
+        "or": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/validation_action" }
+        }
+      }
+    },
+    "output_variable": {
+      "type": "object",
+      "required": ["name", "source", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "source": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["string", "integer", "float", "boolean"]
+        },
+        "description": { "type": "string" }
+      }
+    },
+    "action_select_entry": {
+      "type": "object",
+      "required": ["action_id", "name", "conditions", "action_groups"],
+      "additionalProperties": false,
+      "properties": {
+        "action_id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "conditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["condition"],
+            "additionalProperties": false,
+            "properties": {
+              "condition": { "type": "string" }
+            }
+          }
+        },
+        "action_groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "object",
+                "required": ["actions"],
+                "additionalProperties": false,
+                "properties": {
+                  "actions": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "$ref": "#/definitions/repair_action" }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "repair_action": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "exec_cli": {
+          "type": "object",
+          "required": ["command"],
+          "additionalProperties": false,
+          "properties": {
+            "command": { "type": "string" }
+          }
+        },
+        "config_cli": {
+          "type": "object",
+          "required": ["commands"],
+          "additionalProperties": false,
+          "properties": {
+            "commands": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1
+            }
+          }
+        },
+        "wait": {
+          "type": "object",
+          "required": ["duration"],
+          "additionalProperties": false,
+          "properties": {
+            "duration": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "revalidate": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "reason": { "type": "string" }
+          }
+        },
+        "custom_action": {
+          "type": "object",
+          "required": ["handler"],
+          "additionalProperties": false,
+          "properties": {
+            "handler": { "type": "string" }
+          }
+        },
+        "goto": {
+          "type": "object",
+          "required": ["step_id"],
+          "additionalProperties": false,
+          "properties": {
+            "step_id": { "type": "string" }
+          }
+        },
+        "resolve": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "message": { "type": "string" }
+          }
+        },
+        "escalate": {
+          "type": "object",
+          "required": ["type", "message"],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["open_support_case", "rma"]
+            },
+            "message": { "type": "string" },
+            "component": { "type": "string" },
+            "data": {
+              "type": "object",
+              "additionalProperties": false,
+              "minProperties": 1,
+              "properties": {
+                "commands": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "minItems": 1
+                },
+                "vars": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "minItems": 1
+                }
+              }
+            }
+          }
+        },
+        "fail": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "reason": { "type": "string" },
+            "message": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

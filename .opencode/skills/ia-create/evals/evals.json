@@ -1,0 +1,23 @@
+{
+  "skill_name": "ia-create",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Here's a syslog pattern from an NCS5500: '%PKT_INFRA-FM-3-FAULT_MAJOR : ALARM_MAJOR : Fan Tray 0 : declare : system : max speed to compensate loss of fantrays'. Research folder is at research/fan-tray-ncs5500/. Generate the appropriate intelligence artifacts.",
+      "expected_output": "Should detect FS + RG candidates from syslog pattern and troubleshooting context. Should generate fault-signature YAML with regex matching the syslog, a remediation guide with diagnosis and repair steps, and offer to generate a RAW. All YAML files should pass schema validation. Output should be in ia-drafts/fan-tray-ncs5500/.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I have an optimized TSG for a fabric not ready event. The optimized guide is at research/fabric-not-ready/optimized-tsg.md. Convert it into a repair action workflow.",
+      "expected_output": "Should detect RAW candidate from the optimized TSG input. Should generate a repair-action-workflow YAML with steps derived from the TSG, proper branching, custom_action for physical interventions, and escalation for TAC/RMA exits. Should include a RAW analysis document with Mermaid flowchart. YAML should pass schema validation.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Create all applicable intelligence artifacts for this optics module reset issue. Source data: Syslog pattern '%OPTICS-1-LOSS_OF_LIGHT : Optics0/0/0/1 - Loss of Light, interface is down' on NCS-55A1-36H-SE-S running IOS-XR 7.11.1. Troubleshooting: 1) Check show controllers optics for DOM values. 2) Check for fiber damage or dirty connectors. 3) Clean connectors and verify light levels. 4) If RX power still below -25dBm after cleaning, check remote end. 5) If both ends clean and light levels bad, replace SFP. 6) If replacement SFP also fails, escalate to TAC for possible linecard issue.",
+      "expected_output": "Should detect FS + RG + RAW as a linked set from the syslog pattern and multi-step troubleshooting procedure. Should generate all three with aligned IDs (e.g., FS000004/RG000004/RAW000004). FS should have regex for LOSS_OF_LIGHT syslog with interface extraction. RG should have D1-D4 diagnosis steps and R1-R3 repair steps. RAW should use custom_action for 'clean connectors' and 'replace SFP', escalate only for TAC. All YAMLs should pass validation. Should include OPEN DESIGN QUESTIONS block in each.",
+      "files": []
+    }
+  ]
+}

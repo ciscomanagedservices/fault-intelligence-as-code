@@ -1,0 +1,25 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # TODO: Replace this stub with actual test execution
+      # e.g., pip install -e . && python -m pytest
+      - name: Run tests (stub)
+        run: |
+          echo "All tests passed (stub — no real tests executed yet)"
+          exit 0

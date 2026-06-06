@@ -1,0 +1,81 @@
+site_name: Fault Intelligence as Code
+site_description: >
+  AI Agents, RAG, and MCP for Network Ops - DEVNET-3171, Cisco Live US 2026
+docs_dir: content
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Quickstart:
+      - Start Here: quickstart/index.md
+      - Local Agent Test: quickstart/local-agent-test.md
+      - Lab Environment: quickstart/lab-environment.md
+      - Artifact Authoring: quickstart/artifact-authoring.md
+      - KB Curator: quickstart/kb-curator.md
+  - Architecture:
+      - Overview: architecture/overview.md
+      - Data Flow: architecture/data-flow.md
+      - Agents: architecture/agents.md
+      - Knowledge and Artifacts: architecture/knowledge-base.md
+      - Agentic Concepts: architecture/agentic-concepts.md
+  - Fault Intelligence:
+      - Overview: fault-intelligence/index.md
+      - Authoring Workflow: fault-intelligence/authoring-workflow.md
+      - Reference:
+          - Concepts: fault-intelligence/concepts.md
+          - Remediation Guides: fault-intelligence/remediation-guides.md
+          - Fault Signatures: fault-intelligence/fault-signatures.md
+          - Repair Action Workflows: fault-intelligence/repair-action-workflows.md
+          - RAW Test Framework: fault-intelligence/test-framework.md
+          - Cross-References: fault-intelligence/cross-references.md
+          - Best Practices: fault-intelligence/best-practices.md
+          - Glossary: fault-intelligence/glossary.md
+          - Health Intelligence: fault-intelligence/health-intelligence.md
+  - Configuration:
+      - OpenCode Config: configuration/opencode-config.md
+      - Execution Modes: configuration/execution-modes.md
+      - Webex Integration: configuration/webex-integration.md
+      - Environment Variables: configuration/environment-variables.md
+  - Operations:
+      - Demo Walkthrough: operations/demo-walkthrough.md
+      - Adapting to Your Lab: operations/adapting-to-your-lab.md
+      - Troubleshooting: operations/troubleshooting.md
+      - Run Modes:
+          - Headed Mode: operations/headed-mode.md
+          - Headless Mode: operations/headless-mode.md
+          - Docker Deployment: operations/docker.md
+      - Lessons Learned: operations/lessons-learned.md

@@ -1,0 +1,316 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "diagnostic-parser/v1.0.0",
+  "title": "Diagnostic Data Parser",
+  "description": "Schema for Health Intelligence diagnostic data parser artifacts.",
+  "type": "object",
+  "required": [
+    "name",
+    "id",
+    "version",
+    "description",
+    "input_type",
+    "source_format",
+    "os_types",
+    "parser",
+    "output",
+    "validation",
+    "tags",
+    "created_by",
+    "created_date"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^PARSE_[A-Z][A-Z0-9_]+$",
+      "description": "Unique parser identifier. Must start with PARSE_ in UPPERCASE_SNAKE_CASE."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^PARSE\\d{6}$",
+      "description": "Unique string ID with PARSE prefix and 6-digit zero-padded suffix (e.g. PARSE000001, PARSE000042)."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version string (e.g., '1.0.0')."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Human-readable description of what this parser extracts."
+    },
+    "input_type": {
+      "type": "string",
+      "enum": ["cli_output", "syslog", "gnmi_response", "snmp_response"],
+      "description": "Type of input data this parser consumes."
+    },
+    "source_format": {
+      "type": "string",
+      "enum": ["text", "json", "xml", "table"],
+      "description": "Format of the input data."
+    },
+    "os_types": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": ["IOS-XR", "NX-OS", "IOS-XE", "SONiC"]
+      },
+      "description": "Supported OS types."
+    },
+    "os_versions": {
+      "type": "string",
+      "description": "Version constraint string (e.g., '>=7.0.0')."
+    },
+    "parser": {
+      "$ref": "#/definitions/parser_block",
+      "description": "Parsing rules definition."
+    },
+    "output": {
+      "$ref": "#/definitions/output_definition",
+      "description": "Output schema definition."
+    },
+    "validation": {
+      "$ref": "#/definitions/validation_block",
+      "description": "Output validation rules."
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      },
+      "description": "Classification tags (lowercase only)."
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Author or team name."
+    },
+    "created_date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "ISO 8601 creation date (YYYY-MM-DD)."
+    }
+  },
+  "definitions": {
+    "parser_block": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["regex", "textfsm", "grok", "jq", "xpath", "ttp"],
+          "description": "Parsing engine to use."
+        },
+        "regex": { "$ref": "#/definitions/regex_parser" },
+        "textfsm": { "$ref": "#/definitions/textfsm_parser" },
+        "grok": { "$ref": "#/definitions/grok_parser" },
+        "jq": { "$ref": "#/definitions/jq_parser" },
+        "xpath": { "$ref": "#/definitions/xpath_parser" },
+        "ttp": { "$ref": "#/definitions/ttp_parser" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "regex" } } },
+          "then": { "required": ["regex"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "textfsm" } } },
+          "then": { "required": ["textfsm"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "grok" } } },
+          "then": { "required": ["grok"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "jq" } } },
+          "then": { "required": ["jq"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "xpath" } } },
+          "then": { "required": ["xpath"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "ttp" } } },
+          "then": { "required": ["ttp"] }
+        }
+      ]
+    },
+    "regex_parser": {
+      "type": "object",
+      "required": ["patterns"],
+      "additionalProperties": false,
+      "properties": {
+        "patterns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "pattern", "type"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]+$",
+                "description": "Field name to extract (must match a name in output.schema)."
+              },
+              "pattern": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Regex pattern with named groups (?P<name>...)."
+              },
+              "type": {
+                "type": "string",
+                "enum": ["string", "integer", "float", "boolean", "list"],
+                "description": "Expected type of the extracted value."
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether this field is required in every output record."
+              }
+            }
+          }
+        }
+      }
+    },
+    "textfsm_parser": {
+      "type": "object",
+      "required": ["template"],
+      "additionalProperties": false,
+      "properties": {
+        "template": {
+          "type": "string",
+          "minLength": 10,
+          "description": "Embedded TextFSM template content."
+        }
+      }
+    },
+    "grok_parser": {
+      "type": "object",
+      "required": ["patterns"],
+      "additionalProperties": false,
+      "properties": {
+        "patterns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "pattern"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "pattern": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "jq_parser": {
+      "type": "object",
+      "required": ["expression"],
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string",
+          "minLength": 1,
+          "description": "jq filter expression."
+        }
+      }
+    },
+    "xpath_parser": {
+      "type": "object",
+      "required": ["expressions"],
+      "additionalProperties": false,
+      "properties": {
+        "expressions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "path", "type"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "path": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["string", "integer", "float", "boolean"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "ttp_parser": {
+      "type": "object",
+      "required": ["template"],
+      "additionalProperties": false,
+      "properties": {
+        "template": {
+          "type": "string",
+          "minLength": 1,
+          "description": "TTP template content."
+        }
+      }
+    },
+    "output_definition": {
+      "type": "object",
+      "required": ["schema"],
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "description": "List of fields produced by this parser.",
+          "items": {
+            "type": "object",
+            "required": ["name", "type", "description"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]+$",
+                "description": "Output field name (lowercase_snake_case)."
+              },
+              "type": {
+                "type": "string",
+                "enum": ["string", "integer", "float", "boolean", "list", "object"],
+                "description": "Data type of the output field."
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Human-readable description of the field."
+              },
+              "unit": {
+                "type": "string",
+                "description": "Unit of measure (e.g., dBm, mA, Celsius)."
+              }
+            }
+          }
+        }
+      }
+    },
+    "validation_block": {
+      "type": "object",
+      "required": ["required_fields", "type_checks"],
+      "additionalProperties": false,
+      "properties": {
+        "required_fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Fields that must be present in every parser output record."
+        },
+        "type_checks": {
+          "type": "boolean",
+          "description": "Whether to enforce type validation on output fields."
+        }
+      }
+    }
+  }
+}

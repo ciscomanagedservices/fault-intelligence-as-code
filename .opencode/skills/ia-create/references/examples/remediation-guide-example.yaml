@@ -1,0 +1,166 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# NOTE: The Remediation Guide's primary human-editable format is MARKDOWN, not
+# YAML. See references/examples/remediation-guide-example.md for the canonical
+# filled example in the format engineers actually create and edit. This YAML
+# file is the machine-readable schema reference only — it is not the artifact
+# that engineers author or review.
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# OPEN DESIGN QUESTIONS
+#
+# 1. Should diagnosis step D2 voltage thresholds be platform-specific
+#    (12V for some chassis, 48V for others)?
+# 2. Is hot-swap supported on all target chassis for the repair step R2?
+# ──────────────────────────────────────────────────────────────────────────────
+
+schema_version: "0.0.1"
+
+metadata:
+  name: FAN_TRAY_THERMAL_FAULT_GUIDE
+  id: RG000010
+  alert_def_id: AD000010
+  version: "1.0.0"
+  description: |
+    Remediation guide for diagnosing and repairing fan tray thermal/voltage
+    faults on Cisco 8000 Series routers. Covers diagnostic validation of
+    voltage and current readings, and RMA procedures when hardware replacement
+    is required.
+  severity: CRITICAL
+  created_date: "2026-04-20"
+  modified_date: "2026-04-20"
+  author: "CX Intelligence Team"
+  component: FAN
+  product_ids:
+    - "8808-SYS"
+    - "8818-SYS"
+  os_versions:
+    - "IOS XR 7.5.1"
+    - "IOS XR 8.0.1"
+  tags:
+    - thermal
+    - voltage
+    - fan-tray
+    - rma
+
+fault_signature_ref: FAN_TRAY_THERMAL_FAULT
+
+symptoms:
+  - "Low voltage alarm messages in syslog (PKT_INFRA-FM-2-FAULT_CRITICAL)"
+  - "Invalid sensor read errors (PKT_INFRA-FM-4-FAULT_MINOR)"
+  - "Dash values (-) in 'show environment all' output for fan tray sensors"
+  - "Fan tray status showing as FAULTY in 'show platform'"
+
+prerequisites:
+  access:
+    - "CLI access to the affected device"
+    - "Privilege level 15 (admin/root)"
+  tools:
+    - "Console or SSH access"
+    - "Replacement fan tray module (if RMA required)"
+  knowledge:
+    - "Cisco 8000 Series hardware architecture"
+    - "Fan tray module identification and replacement procedure"
+
+diagnosis_steps:
+  - step_id: "D1"
+    description: |
+      Check environment status for the faulted fan tray location.
+      Look for dash (-) values indicating sensor read failures.
+    commands:
+      - "show environment all location 0/FT<fan_tray_id>"
+    expected_output: |
+      Normal: All sensors show numeric values for Input_Vol, Input_Cur, Power Used.
+      Abnormal: One or more sensors show dash (-) values instead of numbers.
+    interpretation: |
+      If dash values are present, the fan tray has a sensor failure — skip to
+      step D4 (RMA). If all values are numeric, proceed to D2 for voltage check.
+
+  - step_id: "D2"
+    description: |
+      Validate the Input Voltage reading for the fan tray.
+    commands:
+      - "show environment voltage | begin 0/FT<fan_tray_id>"
+    expected_output: |
+      Normal: Input voltage is between 1V and 60V (typical: 12V or 48V).
+      Abnormal: Input voltage is 0V or exceeds 60V.
+    interpretation: |
+      Voltage of 0V means the fan tray is not receiving power — likely faulty.
+      Voltage above 60V indicates an electrical fault. In either case, proceed
+      to D4 (RMA). If voltage is normal, proceed to D3.
+
+  - step_id: "D3"
+    description: |
+      Validate the Input Current reading for the fan tray.
+    commands:
+      - "show environment current | begin 0/FT<fan_tray_id>"
+    expected_output: |
+      Normal: Input current is greater than 0A.
+      Abnormal: Input current is 0A.
+    interpretation: |
+      Current of 0A with normal voltage indicates the fan tray is not drawing
+      power. Proceed to D4 (RMA). If current is normal but alarms persist,
+      monitor for 5 minutes and check for recurring alarms.
+
+  - step_id: "D4"
+    description: |
+      Collect comprehensive diagnostic data before initiating hardware replacement.
+    commands:
+      - "show environment all location 0/FT<fan_tray_id>"
+      - "show environment voltage | begin 0/FT<fan_tray_id>"
+      - "show environment current | begin 0/FT<fan_tray_id>"
+      - "show logging last 100 | include FT<fan_tray_id>"
+      - "show platform"
+    expected_output: |
+      Save all command output for the RMA case.
+    interpretation: |
+      This data will be attached to the RMA request. Proceed to repair step R1.
+
+repair_steps:
+  - step_id: "R1"
+    description: |
+      Initiate RMA for the faulty fan tray module.
+    caution: |
+      Do NOT remove the fan tray until the replacement unit is available.
+      Running with a missing fan tray may cause thermal shutdown of other
+      components depending on chassis configuration and ambient temperature.
+    verification: |
+      Confirm the RMA case has been opened and a replacement unit is being shipped.
+
+  - step_id: "R2"
+    description: |
+      Replace the faulty fan tray with the RMA replacement unit.
+    commands:
+      - "show environment all location 0/FT<fan_tray_id>"
+      - "show environment voltage | begin 0/FT<fan_tray_id>"
+      - "show environment current | begin 0/FT<fan_tray_id>"
+    caution: |
+      Ensure proper ESD precautions when handling the fan tray module.
+      The replacement should be hot-swappable on supported chassis.
+    verification: |
+      After replacement, verify:
+      1. No dash (-) values in 'show environment all' output
+      2. Input voltage is within normal range (1–60V)
+      3. Input current is greater than 0A
+      4. No new alarm messages in syslog related to the fan tray
+      5. Fan tray status shows OPERATIONAL in 'show platform'
+
+escalation:
+  when: |
+    Escalate to Cisco TAC if:
+    - Replacement fan tray shows the same symptoms
+    - All validation checks pass but alarms persist
+    - Multiple fan trays are failing simultaneously (may indicate backplane issue)
+  contact: "Cisco TAC — open a severity 2 case"
+  evidence:
+    - "Output of all diagnostic commands from step D4"
+    - "Timeline of when alarms first appeared"
+    - "RMA case number (if replacement was attempted)"
+    - "show tech-support output"
+    - "show logging last 500"
+
+references:
+  - title: "Cisco 8000 Series Hardware Installation Guide"
+    url: "https://www.cisco.com/c/en/us/td/docs/routers/cisco8000/hardware-install-guide.html"
+    type: documentation
+  - title: "Fan Tray Replacement Procedure"
+    type: knowledge_base

@@ -1,0 +1,65 @@
+{
+  "_frontmatter": {
+    "required_vars": [
+      "webex_room_id",
+      "incident_id",
+      "alert_def_id",
+      "device",
+      "kb_sev_level",
+      "kb_change_window_active",
+      "kb_known_issue_match",
+      "commands"
+    ],
+    "optional_vars": [
+      "incident_title",
+      "step_id",
+      "step_name",
+      "fault_name",
+      "affected_entity",
+      "approval_objective",
+      "approval_evidence_summary",
+      "approval_risk_impact",
+      "approval_expected_result",
+      "approval_verification_plan",
+      "test_title_prefix",
+      "test_run_id"
+    ],
+    "_comment": "The Adaptive Card data.callback_keyword MUST stay 'fault_approval' — the webhook relay's webex-bot routes by this keyword. The data.incident_id MUST be the same incident_id used when the OpenCode session was registered with the relay (matches the relay's approval registration). data.alert_def_id is display/audit metadata only. data.decision MUST be exactly 'APPROVED' or 'DENIED'. In test mode, test_title_prefix='[TEST] ' is prepended to the top-level text field, test_run_id is added as a FactSet entry and to each action's data payload for correlation. The relay still routes by callback_keyword + incident_id — those invariants do not change."
+  },
+  "roomId": "{{ webex_room_id }}",
+  "text": "{{ test_title_prefix }}Approval required for incident {{ incident_id }} (fault {{ alert_def_id }})",
+  "attachments": [{
+    "contentType": "application/vnd.microsoft.card.adaptive",
+    "content": {
+      "type": "AdaptiveCard",
+      "version": "1.3",
+      "body": [
+        {"type": "TextBlock", "text": "{{ test_title_prefix }}Approval Required", "weight": "Bolder", "size": "Large"},
+        {"type": "TextBlock", "text": "Incident Title: {{ incident_title }}", "weight": "Bolder", "wrap": true, "separator": true},
+        {"type": "FactSet", "facts": [
+          {"title": "Incident ID", "value": "{{ incident_id }}"},
+          {"title": "Fault", "value": "{{ alert_def_id }} — {{ fault_name }}"},
+          {"title": "Device", "value": "{{ device }}"},
+          {"title": "Affected", "value": "{{ affected_entity }}"},
+          {"title": "Step", "value": "{{ step_id }} — {{ step_name }}"},
+          {"title": "Severity", "value": "{{ kb_sev_level }}"},
+          {"title": "Change window active", "value": "{{ kb_change_window_active }}"},
+          {"title": "Known issue match", "value": "{{ kb_known_issue_match }}"},
+          {"title": "Test run ID", "value": "{{ test_run_id }}"}
+        ]},
+        {"type": "TextBlock", "text": "**Objective:** {{ approval_objective }}", "wrap": true},
+        {"type": "TextBlock", "text": "**Key evidence:** {{ approval_evidence_summary }}", "wrap": true},
+        {"type": "TextBlock", "text": "**Proposed commands:**\n\n```\n{{ commands }}\n```", "wrap": true},
+        {"type": "TextBlock", "text": "**Risk / impact:** {{ approval_risk_impact }}", "wrap": true},
+        {"type": "TextBlock", "text": "**Expected result:** {{ approval_expected_result }}", "wrap": true},
+        {"type": "TextBlock", "text": "**Verification:** {{ approval_verification_plan }}", "wrap": true},
+        {"type": "TextBlock", "text": "If the change window is **false**, CAB or ECAB approval may be required per change management policy. Full evidence is in the preceding step-progress messages.", "wrap": true, "isSubtle": true},
+        {"type": "TextBlock", "text": "Click a button below or reply **APPROVE** / **DENY** in this room.", "wrap": true}
+      ],
+      "actions": [
+        {"type": "Action.Submit", "title": "Approve", "data": {"decision": "APPROVED", "incident_id": "{{ incident_id }}", "alert_def_id": "{{ alert_def_id }}", "callback_keyword": "fault_approval", "test_run_id": "{{ test_run_id }}"}},
+        {"type": "Action.Submit", "title": "Deny", "data": {"decision": "DENIED", "incident_id": "{{ incident_id }}", "alert_def_id": "{{ alert_def_id }}", "callback_keyword": "fault_approval", "test_run_id": "{{ test_run_id }}"}}
+      ]
+    }
+  }]
+}

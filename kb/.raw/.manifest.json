@@ -1,0 +1,113 @@
+{
+  "sources": {
+    ".raw/acme_corp_netops_handbook.md": {
+      "hash": "A14CEC7B3DC03BC4548614B5AAC77FB2",
+      "ingested_at": "2026-05-06",
+      "pages_created": [
+        "wiki/sources/ACME Corp Network Operations Handbook.md",
+        "wiki/entities/ACME Corp.md",
+        "wiki/entities/Global Network Operations Center.md",
+        "wiki/entities/Network Architecture and Engineering.md",
+        "wiki/entities/Network Security Operations.md",
+        "wiki/entities/Cisco.md",
+        "wiki/entities/Juniper Networks.md",
+        "wiki/entities/Arista Networks.md",
+        "wiki/entities/Palo Alto Networks.md",
+        "wiki/entities/Fortinet.md",
+        "wiki/entities/F5 Networks.md",
+        "wiki/entities/NetBox.md",
+        "wiki/entities/Splunk.md",
+        "wiki/entities/ServiceNow.md",
+        "wiki/entities/ThousandEyes.md",
+        "wiki/entities/Kentik.md",
+        "wiki/entities/Oxidized.md",
+        "wiki/concepts/BGP.md",
+        "wiki/concepts/IS-IS.md",
+        "wiki/concepts/EVPN-VXLAN.md",
+        "wiki/concepts/Spine-Leaf Architecture.md",
+        "wiki/concepts/SD-WAN.md",
+        "wiki/concepts/Zero Trust.md",
+        "wiki/concepts/VRRP.md",
+        "wiki/concepts/BFD.md",
+        "wiki/concepts/MACsec.md",
+        "wiki/concepts/RPKI.md",
+        "wiki/concepts/Infrastructure as Code.md",
+        "wiki/runbooks/NOC Alert Triage Procedure.md",
+        "wiki/runbooks/BGP Adjacency Troubleshooting.md",
+        "wiki/runbooks/Circuit Outage Response.md",
+        "wiki/business-rules/Incident Severity SLAs.md",
+        "wiki/business-rules/Change Management Policy.md",
+        "wiki/business-rules/Security Zero Trust Mandates.md",
+        "wiki/known-issues/Shadow IT — Unapproved Network Hardware.md"
+      ],
+      "pages_updated": [
+        "wiki/entities/_index-entities.md",
+        "wiki/sources/_index-sources.md",
+        "wiki/concepts/_index-concepts.md",
+        "wiki/runbooks/_index-runbooks.md",
+        "wiki/business-rules/_index-business-rules.md",
+        "wiki/known-issues/_index-known-issues.md",
+        "wiki/index.md",
+        "wiki/log.md",
+        "wiki/hot.md"
+      ]
+    },
+    ".raw/INC-20260314T082217Z-xr43-bgp-flap.md": {
+      "hash": "571087C34C311023E32AF3B9D0AC8263",
+      "ingested_at": "2026-05-29",
+      "pages_created": [
+        "wiki/incidents/INC-20260314 — BGP Session Flap xr-43.md",
+        "wiki/sources/INC-20260314 — BGP Session Flap xr-43 (source).md",
+        "wiki/entities/xr-43.md",
+        "wiki/entities/ISP-A.md",
+        "wiki/known-issues/SFP+ Silent Degradation — CRC Below BFD Threshold.md"
+      ],
+      "pages_updated": [
+        "wiki/entities/_index-entities.md",
+        "wiki/incidents/_index-incidents.md",
+        "wiki/sources/_index-sources.md",
+        "wiki/known-issues/_index-known-issues.md",
+        "wiki/index.md",
+        "wiki/log.md",
+        "wiki/hot.md"
+      ]
+    },
+    ".raw/INC-20260421T031544Z-xr43-memory-exhaustion.md": {
+      "hash": "94F2356E901B0A34A89F3EDD3F4CADCE",
+      "ingested_at": "2026-05-29",
+      "pages_created": [
+        "wiki/incidents/INC-20260421 — Process Memory Exhaustion xr-43.md",
+        "wiki/sources/INC-20260421 — Process Memory Exhaustion xr-43 (source).md",
+        "wiki/known-issues/ASR-9904 BGP Process OOM — Large Prefix-Sets.md"
+      ],
+      "pages_updated": [
+        "wiki/entities/xr-43.md",
+        "wiki/incidents/_index-incidents.md",
+        "wiki/sources/_index-sources.md",
+        "wiki/known-issues/_index-known-issues.md",
+        "wiki/index.md",
+        "wiki/log.md",
+        "wiki/hot.md"
+      ]
+    },
+    ".raw/INC-20260509T143322Z-xr43-interface-crc.md": {
+      "hash": "07979B56C96F8E2311B727DE7F992273",
+      "ingested_at": "2026-05-29",
+      "pages_created": [
+        "wiki/incidents/INC-20260509 — Persistent CRC Errors xr-43.md",
+        "wiki/sources/INC-20260509 — Persistent CRC Errors xr-43 (source).md",
+        "wiki/runbooks/Interface CRC Error Troubleshooting.md"
+      ],
+      "pages_updated": [
+        "wiki/entities/xr-43.md",
+        "wiki/incidents/_index-incidents.md",
+        "wiki/sources/_index-sources.md",
+        "wiki/known-issues/SFP+ Silent Degradation — CRC Below BFD Threshold.md",
+        "wiki/runbooks/_index-runbooks.md",
+        "wiki/index.md",
+        "wiki/log.md",
+        "wiki/hot.md"
+      ]
+    }
+  }
+}
