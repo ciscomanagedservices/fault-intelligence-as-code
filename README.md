@@ -18,12 +18,12 @@ Use Opencode's built-in **Builder** agent for general setup, file changes, and l
 
 | Resource | Use it for |
 |----------|------------|
-| [Published documentation](https://ciscomanagedservices.github.io/fault-mgmt-as-code/) | The best place to read the project docs. |
+| [Published documentation](https://ciscomanagedservices.github.io/fault-intelligence-as-code/) | The best place to read the project docs. |
 | [Session slides](docs/presentations/DEVNET-3171.pdf) | The Cisco Live deck for DEVNET-3171. |
-| [Quickstarts](https://ciscomanagedservices.github.io/fault-mgmt-as-code/quickstart/) | The fastest paths for trying the demo, setting up a lab, authoring artifacts, and curating the KB. |
-| [Local agent prompt test](https://ciscomanagedservices.github.io/fault-mgmt-as-code/quickstart/local-agent-test/) | Run the troubleshooting flow with simulated device responses, no Splunk/RADKit/Webex required. |
-| [Architecture overview](https://ciscomanagedservices.github.io/fault-mgmt-as-code/architecture/overview/) | Understand the agent, data flow, knowledge base, and artifact model. |
-| [Artifact authoring](https://ciscomanagedservices.github.io/fault-mgmt-as-code/quickstart/artifact-authoring/) | Create Fault Signatures, Repair Action Workflows, Remediation Guides, and tests. |
+| [Quickstarts](https://ciscomanagedservices.github.io/fault-intelligence-as-code/quickstart/) | The fastest paths for trying the demo, setting up a lab, authoring artifacts, and curating the KB. |
+| [Local agent prompt test](https://ciscomanagedservices.github.io/fault-intelligence-as-code/quickstart/local-agent-test/) | Run the troubleshooting flow with simulated device responses, no Splunk/RADKit/Webex required. |
+| [Architecture overview](https://ciscomanagedservices.github.io/fault-intelligence-as-code/architecture/overview/) | Understand the agent, data flow, knowledge base, and artifact model. |
+| [Artifact authoring](https://ciscomanagedservices.github.io/fault-intelligence-as-code/quickstart/artifact-authoring/) | Create Fault Signatures, Repair Action Workflows, Remediation Guides, and tests. |
 
 ## What Is In This Repo
 
@@ -41,7 +41,7 @@ Use Opencode's built-in **Builder** agent for general setup, file changes, and l
 
 ## Try It
 
-The easiest path is the [Local Agent Prompt Test](https://ciscomanagedservices.github.io/fault-mgmt-as-code/quickstart/local-agent-test/). It uses OpenCode and checked-in test bundles to run the `network-troubleshooter` agent without touching real network devices.
+The easiest path is the [Local Agent Prompt Test](https://ciscomanagedservices.github.io/fault-intelligence-as-code/quickstart/local-agent-test/). It uses OpenCode and checked-in test bundles to run the `network-troubleshooter` agent without touching real network devices.
 
 When you are ready to adapt the project, fork this repository first, then clone your fork. That gives you a place to commit your own lab configuration, artifact experiments, and documentation changes without changing the upstream reference copy.
 

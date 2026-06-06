@@ -89,7 +89,7 @@ python fs_to_alert.py AD000002 --webhook-url http://myhost:8080/fault-alert
 python fs_to_alert.py AD000002 --webhook-url ""
 
 # Use a different repo root
-python fs_to_alert.py AD000002 --repo-root /path/to/fault-mgmt-as-code
+python fs_to_alert.py AD000002 --repo-root /path/to/fault-intelligence-as-code
 ```
 
 **Generated SPL format:**

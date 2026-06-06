@@ -149,8 +149,8 @@ Manual fallback:
 Create an environment file:
 
 ```bash
-sudo install -d -m 0750 -o <service-user> -g <service-user> /etc/fault-mgmt-as-code
-sudoedit /etc/fault-mgmt-as-code/relay.env
+sudo install -d -m 0750 -o <service-user> -g <service-user> /etc/fault-intelligence-as-code
+sudoedit /etc/fault-intelligence-as-code/relay.env
 ```
 
 Example values:
@@ -177,8 +177,8 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-WorkingDirectory=/opt/fault-mgmt-as-code
-EnvironmentFile=/etc/fault-mgmt-as-code/relay.env
+WorkingDirectory=/opt/fault-intelligence-as-code
+EnvironmentFile=/etc/fault-intelligence-as-code/relay.env
 ExecStart=/usr/local/bin/opencode serve --port 4096
 Restart=on-failure
 User=<service-user>
@@ -197,9 +197,9 @@ After=network-online.target opencode.service
 Wants=network-online.target
 
 [Service]
-WorkingDirectory=/opt/fault-mgmt-as-code
-EnvironmentFile=/etc/fault-mgmt-as-code/relay.env
-ExecStart=/opt/fault-mgmt-as-code/.venv/bin/python -m app.alert_pipeline
+WorkingDirectory=/opt/fault-intelligence-as-code
+EnvironmentFile=/etc/fault-intelligence-as-code/relay.env
+ExecStart=/opt/fault-intelligence-as-code/.venv/bin/python -m app.alert_pipeline
 Restart=on-failure
 User=<service-user>
 Group=<service-user>

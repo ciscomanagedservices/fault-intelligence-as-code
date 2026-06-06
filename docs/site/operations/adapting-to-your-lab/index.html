@@ -2029,8 +2029,8 @@ python<span class="w"> </span>-m<span class="w"> </span>app.alert_pipeline
 </code></pre></div>
 <p>Manual fallback:</p>
 <p>Create an environment file:</p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>install<span class="w"> </span>-d<span class="w"> </span>-m<span class="w"> </span><span class="m">0750</span><span class="w"> </span>-o<span class="w"> </span>&lt;service-user&gt;<span class="w"> </span>-g<span class="w"> </span>&lt;service-user&gt;<span class="w"> </span>/etc/fault-mgmt-as-code
-sudoedit<span class="w"> </span>/etc/fault-mgmt-as-code/relay.env
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>install<span class="w"> </span>-d<span class="w"> </span>-m<span class="w"> </span><span class="m">0750</span><span class="w"> </span>-o<span class="w"> </span>&lt;service-user&gt;<span class="w"> </span>-g<span class="w"> </span>&lt;service-user&gt;<span class="w"> </span>/etc/fault-intelligence-as-code
+sudoedit<span class="w"> </span>/etc/fault-intelligence-as-code/relay.env
 </code></pre></div>
 <p>Example values:</p>
 <div class="highlight"><pre><span></span><code><span class="nv">OPENCODE_URL</span><span class="o">=</span>http://127.0.0.1:4096
@@ -2051,8 +2051,8 @@ sudoedit<span class="w"> </span>/etc/fault-mgmt-as-code/relay.env
 <span class="na">Wants</span><span class="o">=</span><span class="s">network-online.target</span>
 
 <span class="k">[Service]</span>
-<span class="na">WorkingDirectory</span><span class="o">=</span><span class="s">/opt/fault-mgmt-as-code</span>
-<span class="na">EnvironmentFile</span><span class="o">=</span><span class="s">/etc/fault-mgmt-as-code/relay.env</span>
+<span class="na">WorkingDirectory</span><span class="o">=</span><span class="s">/opt/fault-intelligence-as-code</span>
+<span class="na">EnvironmentFile</span><span class="o">=</span><span class="s">/etc/fault-intelligence-as-code/relay.env</span>
 <span class="na">ExecStart</span><span class="o">=</span><span class="s">/usr/local/bin/opencode serve --port 4096</span>
 <span class="na">Restart</span><span class="o">=</span><span class="s">on-failure</span>
 <span class="na">User</span><span class="o">=</span><span class="s">&lt;service-user&gt;</span>
@@ -2068,9 +2068,9 @@ sudoedit<span class="w"> </span>/etc/fault-mgmt-as-code/relay.env
 <span class="na">Wants</span><span class="o">=</span><span class="s">network-online.target</span>
 
 <span class="k">[Service]</span>
-<span class="na">WorkingDirectory</span><span class="o">=</span><span class="s">/opt/fault-mgmt-as-code</span>
-<span class="na">EnvironmentFile</span><span class="o">=</span><span class="s">/etc/fault-mgmt-as-code/relay.env</span>
-<span class="na">ExecStart</span><span class="o">=</span><span class="s">/opt/fault-mgmt-as-code/.venv/bin/python -m app.alert_pipeline</span>
+<span class="na">WorkingDirectory</span><span class="o">=</span><span class="s">/opt/fault-intelligence-as-code</span>
+<span class="na">EnvironmentFile</span><span class="o">=</span><span class="s">/etc/fault-intelligence-as-code/relay.env</span>
+<span class="na">ExecStart</span><span class="o">=</span><span class="s">/opt/fault-intelligence-as-code/.venv/bin/python -m app.alert_pipeline</span>
 <span class="na">Restart</span><span class="o">=</span><span class="s">on-failure</span>
 <span class="na">User</span><span class="o">=</span><span class="s">&lt;service-user&gt;</span>
 <span class="na">Group</span><span class="o">=</span><span class="s">&lt;service-user&gt;</span>

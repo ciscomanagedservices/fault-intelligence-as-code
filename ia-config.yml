@@ -7,7 +7,7 @@
 workspace:
   customer: "Cisco Live US 2026 Demo"
   engagement: "DEVNET-3171 — Fault Intelligence as Code"
-  repository: "https://github.com/ciscomanagedservices/fault-mgmt-as-code.git"
+  repository: "https://github.com/ciscomanagedservices/fault-intelligence-as-code.git"
   description: "Fault intelligence artifacts for the DEVNET-3171 Cisco Live US 2026 breakout session demo"
   catalogic_base_url: ""
   cisco_support_api_scope: ""
