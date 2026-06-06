@@ -244,7 +244,7 @@ fields into your working memory:
   paths, e.g. `intelligence-artifacts/AD000003-bgp-max-prefix-adjchange-xr`
 - `alert_definition_bundle_url` — GitHub URL for that directory, using this
   exact prefix:
-  `https://github.com/ciscomanagedservices/fault-mgmt-as-code/tree/master/`
+  `https://github.com/ciscomanagedservices/fault-intelligence-as-code/tree/master/`
 - `fs_yaml` — full Fault Signature YAML (passed to fault-remediation)
 - `raw_yaml` — full Repair Action Workflow YAML (passed to fault-remediation)
 - `matched_events` — which event texts triggered which patterns (regex mode)
@@ -272,11 +272,11 @@ the parent directory of `artifacts.fs_path`, `artifacts.raw_path`, or
 path to:
 
 ```text
-https://github.com/ciscomanagedservices/fault-mgmt-as-code/tree/master/
+https://github.com/ciscomanagedservices/fault-intelligence-as-code/tree/master/
 ```
 
 Example: `AD000003` should produce
-`https://github.com/ciscomanagedservices/fault-mgmt-as-code/tree/master/intelligence-artifacts/AD000003-bgp-max-prefix-adjchange-xr`.
+`https://github.com/ciscomanagedservices/fault-intelligence-as-code/tree/master/intelligence-artifacts/AD000003-bgp-max-prefix-adjchange-xr`.
 
 Immediately after parsing the IA artifact block, derive `incident_title` and
 `affected_entity` from the alert payload and parsed artifacts (the same values

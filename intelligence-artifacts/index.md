@@ -6,8 +6,8 @@
 
 | Alert Definition | Artifacts | Last Published | PR |
 |------------------|-----------|----------------|----|
-| AD000002-bgp-neighbor-admin-shutdown-xr | FS, RG, RAW | 2026-05-25 | [#2](https://github.com/ciscomanagedservices/fault-mgmt-as-code/pull/2) |
-| AD000003-bgp-max-prefix-adjchange-xr | FS, RG, RAW | 2026-05-29 | [#8](https://github.com/ciscomanagedservices/fault-mgmt-as-code/pull/8) |
+| AD000002-bgp-neighbor-admin-shutdown-xr | FS, RG, RAW | 2026-05-25 | [#2](https://github.com/ciscomanagedservices/fault-intelligence-as-code/pull/2) |
+| AD000003-bgp-max-prefix-adjchange-xr | FS, RG, RAW | 2026-05-29 | [#8](https://github.com/ciscomanagedservices/fault-intelligence-as-code/pull/8) |
 
 ## AD000002-bgp-neighbor-admin-shutdown-xr
 

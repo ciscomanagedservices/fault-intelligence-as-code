@@ -15,7 +15,7 @@ Usage:
   python fs_to_alert.py AD000002 --output my_alert.yml
   python fs_to_alert.py AD000002 --index syslog --cron "*/5 * * * *"
   python fs_to_alert.py AD000002 --sourcetype cisco:ios
-  python fs_to_alert.py AD000002 --repo-root /path/to/fault-mgmt-as-code
+  python fs_to_alert.py AD000002 --repo-root /path/to/fault-intelligence-as-code
 """
 
 import argparse

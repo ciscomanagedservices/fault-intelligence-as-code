@@ -17,7 +17,7 @@ For the other setup paths:
 From a command prompt or terminal:
 
 ```bash
-cd c:/src/fault-mgmt-as-code
+cd c:/src/fault-intelligence-as-code
 ```
 
 If you cloned the repo somewhere else, use that path instead.

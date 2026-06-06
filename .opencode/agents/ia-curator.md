@@ -139,7 +139,7 @@ and silently returns empty results for any path inside a gitignored directory.
 **Rule:** Never use `glob` to scan `ia-drafts/`. Always use `bash` instead:
 
 ```powershell
-Get-ChildItem -Recurse "C:\src\fault-mgmt-as-code\ia-drafts"
+Get-ChildItem -Recurse "C:\src\fault-intelligence-as-code\ia-drafts"
 ```
 
 This applies to any other gitignored working directory (e.g., `research/` if
